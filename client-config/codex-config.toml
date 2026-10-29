@@ -1,0 +1,23 @@
+# Append to ~/.codex/config.toml (read by both Codex Desktop and Codex CLI).
+# Codex changes these keys between releases: if Codex refuses to start or nothing
+# reaches the collector, compare with the [otel] section of the official config docs:
+#   https://github.com/openai/codex/blob/main/docs/config.md
+#
+# Note: some Codex releases do not export metrics from `codex exec`; the
+# session-indexer service covers that gap from ~/.codex/sessions.
+
+[otel]
+environment = "local"
+log_user_prompt = false
+
+[otel.exporter."otlp-http"]
+endpoint = "http://127.0.0.1:4318/v1/logs"
+protocol = "binary"
+
+[otel.trace_exporter."otlp-http"]
+endpoint = "http://127.0.0.1:4318/v1/traces"
+protocol = "binary"
+
+[otel.metrics_exporter."otlp-http"]
+endpoint = "http://127.0.0.1:4318/v1/metrics"
+protocol = "binary"

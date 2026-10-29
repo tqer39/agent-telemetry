@@ -1,0 +1,34 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "github>tqer39/renovate-config"
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/^lefthook\\.yml$/"],
+      "matchStrings": ["--package=renovate@(?<currentValue>\\d+\\.\\d+\\.\\d+)"],
+      "depNameTemplate": "renovate",
+      "datasourceTemplate": "npm",
+      "versioningTemplate": "npm"
+    }
+  ],
+  "packageRules": [
+    {
+      "description": "js-yaml 3 CLI requires argparse v1 compatibility, removed in v3",
+      "matchManagers": ["npm"],
+      "matchDepNames": ["js-yaml@3>argparse"],
+      "allowedVersions": ">=2 <3"
+    },
+    {
+      "matchManagers": ["mise"],
+      "matchPackageNames": ["pnpm/pnpm"],
+      "overrideDatasource": "npm",
+      "overridePackageName": "pnpm"
+    },
+    {
+      "matchPackageNames": ["pnpm", "pnpm/pnpm"],
+      "groupName": "pnpm toolchain"
+    }
+  ]
+}

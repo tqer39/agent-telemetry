@@ -1,0 +1,22 @@
+# secrets / local config
+.env
+.env.*
+!.env.example
+*.bak-*
+
+# python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.idea/
+*.swp
+
+# never commit transcripts or telemetry dumps
+*.jsonl
+!session-indexer/tests/fixtures/*.jsonl

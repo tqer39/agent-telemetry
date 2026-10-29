@@ -1,0 +1,89 @@
+# OpenTelemetry Collector config (static; no generator script).
+# Receives OTLP from Claude Desktop / Claude Code and Codex Desktop / Codex CLI.
+# Transcript JSONL is NOT shipped raw: session-indexer summarizes it into metrics
+# so that source code, secrets and prompts never land in Loki.
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch:
+    timeout: 5s
+    send_batch_size: 1024
+  # Claude Code exports delta temporality by default; Prometheus needs cumulative.
+  deltatocumulative: {}
+  resource:
+    attributes:
+      - key: deployment.environment
+        value: local
+        action: upsert
+  # Normalize a tool label so dashboards can split Claude vs Codex.
+  transform/cli_tool:
+    error_mode: ignore
+    log_statements:
+      - context: resource
+        statements:
+          - set(attributes["cli_tool"], "claude-code") where IsMatch(attributes["service.name"], "^claude")
+          - set(attributes["cli_tool"], "codex") where IsMatch(attributes["service.name"], "^codex")
+    metric_statements:
+      - context: resource
+        statements:
+          - set(attributes["cli_tool"], "claude-code") where IsMatch(attributes["service.name"], "^claude")
+          - set(attributes["cli_tool"], "codex") where IsMatch(attributes["service.name"], "^codex")
+    trace_statements:
+      - context: resource
+        statements:
+          - set(attributes["cli_tool"], "claude-code") where IsMatch(attributes["service.name"], "^claude")
+          - set(attributes["cli_tool"], "codex") where IsMatch(attributes["service.name"], "^codex")
+
+exporters:
+  prometheusremotewrite:
+    endpoint: http://prometheus:9090/api/v1/write
+    resource_to_telemetry_conversion:
+      enabled: true
+  otlp/tempo:
+    endpoint: tempo:4317
+    tls:
+      insecure: true
+  otlphttp/loki:
+    endpoint: http://loki:3100/otlp
+    tls:
+      insecure: true
+  debug:
+    verbosity: ${env:DEBUG_VERBOSITY}
+
+service:
+  telemetry:
+    logs:
+      level: info
+    metrics:
+      level: basic
+      readers:
+        - pull:
+            exporter:
+              prometheus:
+                host: 0.0.0.0
+                port: 8888
+  extensions: [health_check]
+  pipelines:
+    metrics:
+      receivers: [otlp]
+      processors: [deltatocumulative, transform/cli_tool, resource, batch]
+      exporters: [prometheusremotewrite, debug]
+    traces:
+      receivers: [otlp]
+      processors: [transform/cli_tool, resource, batch]
+      exporters: [otlp/tempo, debug]
+    logs:
+      receivers: [otlp]
+      processors: [transform/cli_tool, resource, batch]
+      exporters: [otlphttp/loki, debug]

@@ -1,0 +1,46 @@
+# see https://yamllint.readthedocs.io/en/stable/configuration.html
+#
+# Prettier handles formatting (spacing, indentation, etc.)
+# yamllint focuses on semantic/linting rules only
+
+yaml-files:
+  - '*.yaml'
+  - '*.yml'
+  - '.yamllint'
+
+# pnpm 12 generates a multi-document lockfile with required separators.
+ignore: |
+  pnpm-lock.yaml
+
+rules:
+  # Disabled - Prettier handles formatting
+  braces: disable
+  brackets: disable
+  colons: disable
+  commas: disable
+  empty-lines: disable
+  hyphens: disable
+  indentation: disable
+  new-line-at-end-of-file: disable
+  new-lines: disable
+  trailing-spaces: disable
+
+  # Enabled - yamllint semantic/linting rules
+  key-duplicates: enable
+  truthy:
+    level: warning
+  comments:
+    level: warning
+  comments-indentation:
+    level: warning
+
+  # Disabled - not needed for this project
+  document-end: disable
+  document-start:
+    present: false
+    level: error
+  empty-values: disable
+  octal-values: disable
+  quoted-strings: disable
+  key-ordering: disable
+  line-length: disable

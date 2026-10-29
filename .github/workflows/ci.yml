@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: jdx/mise-action@08ae2a091c038e1e05ec6f5115dc5c69d5a2a6b8 # v5
+      - name: session-indexer tests and lint
+        run: mise run test
+      - name: compose file is valid
+        run: GF_SECURITY_ADMIN_PASSWORD=ci docker compose config -q
+      - name: collector config is valid
+        run: >-
+          docker run --rm -e DEBUG_VERBOSITY=basic
+          -v "$PWD/otel-collector/config.yaml:/cfg.yaml:ro"
+          otel/opentelemetry-collector-contrib:0.120.0 validate --config=/cfg.yaml
+      - name: prometheus config and rules are valid
+        run: >-
+          docker run --rm --entrypoint promtool
+          -v "$PWD/prometheus:/etc/prometheus:ro"
+          prom/prometheus:v3.1.0 check config /etc/prometheus/prometheus.yml
+      - name: dashboards are valid JSON
+        run: for f in grafana/dashboards/*.json; do python3 -m json.tool "$f" > /dev/null; done
+      - name: yamllint / actionlint
+        run: yamllint --no-warnings . && actionlint
