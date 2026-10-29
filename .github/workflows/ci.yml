@@ -39,3 +39,19 @@ jobs:
         run: for f in grafana/dashboards/*.json; do python3 -m json.tool "$f" > /dev/null; done
       - name: yamllint / actionlint
         run: yamllint --no-warnings . && actionlint
+
+  # main の ruleset は `workflow-result` を必須チェックにしている（terraform-github の標準保護）
+  workflow-result:
+    needs: [test]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check workflow result
+        env:
+          TEST_RESULT: ${{ needs.test.result }}
+        run: |
+          if [ "$TEST_RESULT" != "success" ]; then
+            echo "test did not succeed: $TEST_RESULT"
+            exit 1
+          fi
