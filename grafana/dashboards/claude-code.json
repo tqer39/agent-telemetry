@@ -272,7 +272,7 @@
       "gridPos": { "h": 4, "w": 5, "x": 4, "y": 19 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
-        { "expr": "sum(claude_code_commit_total)", "legendFormat": "Commits" }
+        { "expr": "sum(claude_code_commit_count_total)", "legendFormat": "Commits" }
       ],
       "fieldConfig": {
         "defaults": {
@@ -289,7 +289,7 @@
       "gridPos": { "h": 4, "w": 5, "x": 9, "y": 19 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
-        { "expr": "sum(claude_code_pull_request_total)", "legendFormat": "PRs" }
+        { "expr": "sum(claude_code_pull_request_count_total)", "legendFormat": "PRs" }
       ],
       "fieldConfig": {
         "defaults": {
@@ -306,7 +306,7 @@
       "gridPos": { "h": 4, "w": 5, "x": 14, "y": 19 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
-        { "expr": "sum(claude_code_lines_of_code_total)", "legendFormat": "LOC" }
+        { "expr": "sum(claude_code_lines_of_code_count_total)", "legendFormat": "LOC" }
       ],
       "fieldConfig": {
         "defaults": {
@@ -323,7 +323,7 @@
       "gridPos": { "h": 4, "w": 5, "x": 19, "y": 19 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
-        { "expr": "sum(claude_code_code_edit_tool_total)", "legendFormat": "Edits" }
+        { "expr": "sum(claude_code_code_edit_tool_decision_total)", "legendFormat": "Edits" }
       ],
       "fieldConfig": {
         "defaults": {
@@ -341,10 +341,10 @@
       "gridPos": { "h": 8, "w": 24, "x": 0, "y": 23 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
-        { "expr": "sum(rate(claude_code_commit_total[5m]))", "legendFormat": "Commits" },
-        { "expr": "sum(rate(claude_code_pull_request_total[5m]))", "legendFormat": "Pull Requests" },
-        { "expr": "sum(rate(claude_code_code_edit_tool_total[5m]))", "legendFormat": "Code Edits" },
-        { "expr": "sum(rate(claude_code_lines_of_code_total[5m]))", "legendFormat": "Lines of Code" }
+        { "expr": "sum(rate(claude_code_commit_count_total[5m]))", "legendFormat": "Commits" },
+        { "expr": "sum(rate(claude_code_pull_request_count_total[5m]))", "legendFormat": "Pull Requests" },
+        { "expr": "sum(rate(claude_code_code_edit_tool_decision_total[5m]))", "legendFormat": "Code Edits" },
+        { "expr": "sum(rate(claude_code_lines_of_code_count_total[5m]))", "legendFormat": "Lines of Code" }
       ],
       "fieldConfig": {
         "defaults": {

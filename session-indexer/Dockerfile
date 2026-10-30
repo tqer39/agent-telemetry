@@ -12,7 +12,7 @@ RUN uv sync --frozen --no-dev
 FROM python:3.13-slim
 RUN useradd --system --uid 10001 --no-create-home indexer
 COPY --from=build --chown=root:root /app /app
-ENV PATH="/app/.venv/bin:$PATH" PYTHONUNBUFFERED=1
+ENV PATH="/app/.venv/bin:$PATH" PYTHONUNBUFFERED=1 LISTEN_ADDR=0.0.0.0
 USER 10001
 EXPOSE 9464
 ENTRYPOINT ["session-indexer"]

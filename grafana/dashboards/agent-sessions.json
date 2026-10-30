@@ -219,7 +219,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (tool) (agent_session_tokens{tool=~\"$tool\",project=~\"$project\",type!=\"reasoning\"} and on(tool,session_id,project) (agent_session_start_time_seconds{tool=~\"$tool\",project=~\"$project\"} >= ${__from:date:seconds}))",
+          "expr": "sum by (tool) (agent_session_tokens{tool=~\"$tool\",project=~\"$project\",type=~\"input|output\"} and on(tool,session_id,project) (agent_session_start_time_seconds{tool=~\"$tool\",project=~\"$project\"} >= ${__from:date:seconds}))",
           "refId": "A",
           "legendFormat": "{{tool}}",
           "instant": true,
@@ -464,7 +464,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (tool,session_id,project) (agent_session_tokens{tool=~\"$tool\",project=~\"$project\",type!=\"reasoning\"} and on(tool,session_id,project) (agent_session_start_time_seconds{tool=~\"$tool\",project=~\"$project\"} >= ${__from:date:seconds}))",
+          "expr": "sum by (tool,session_id,project) (agent_session_tokens{tool=~\"$tool\",project=~\"$project\",type=~\"input|output\"} and on(tool,session_id,project) (agent_session_start_time_seconds{tool=~\"$tool\",project=~\"$project\"} >= ${__from:date:seconds}))",
           "refId": "D",
           "legendFormat": "",
           "instant": true,
@@ -811,7 +811,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sort_desc(sum by (project,tool) (agent_session_tokens{tool=~\"$tool\",project=~\"$project\",type!=\"reasoning\"} and on(tool,session_id,project) (agent_session_start_time_seconds{tool=~\"$tool\",project=~\"$project\"} >= ${__from:date:seconds})))",
+          "expr": "sort_desc(sum by (project,tool) (agent_session_tokens{tool=~\"$tool\",project=~\"$project\",type=~\"input|output\"} and on(tool,session_id,project) (agent_session_start_time_seconds{tool=~\"$tool\",project=~\"$project\"} >= ${__from:date:seconds})))",
           "refId": "A",
           "legendFormat": "{{project}} ({{tool}})",
           "instant": true,

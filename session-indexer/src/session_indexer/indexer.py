@@ -76,8 +76,9 @@ class Indexer:
                     continue
                 try:
                     summary = source.parser(path, self.idle_gap_seconds)
-                except OSError as exc:  # unreadable / vanished mid-read
-                    log.warning("failed to read %s: %s", path, exc)
+                except Exception as exc:  # one bad transcript must not abort the whole scan
+                    log.warning("failed to parse transcript (%s)", type(exc).__name__)
+                    self._cache.pop(path, None)
                     stats.file_errors += 1
                     continue
                 stats.files_parsed += 1

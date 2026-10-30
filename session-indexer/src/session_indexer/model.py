@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 import shlex
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import PurePath
 
 _WS = re.compile(r"\s+")
@@ -148,6 +148,8 @@ def parse_iso(value: object) -> datetime | None:
     if not isinstance(value, str) or not value:
         return None
     try:
-        return datetime.fromisoformat(value.replace("Z", "+00:00"))
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
     except ValueError:
         return None
+    # Mixing naive and aware values raises TypeError on comparison; treat naive as UTC.
+    return parsed if parsed.tzinfo else parsed.replace(tzinfo=UTC)

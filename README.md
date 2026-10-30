@@ -38,7 +38,7 @@ Desktop apps may send fewer signals than the CLIs. Do not assume; check:
 
 1. Set `DEBUG_VERBOSITY=detailed` in `.env`, `docker compose up -d otel-collector`.
 2. `mise run verify`, then run one small task in each Desktop app.
-3. Note which of metrics / logs / traces appear per app; set verbosity back to `basic`.
+3. Note which of metrics / logs / traces appear per app; set verbosity back to `basic` and run `docker compose up -d otel-collector` again (the running container keeps the old value).
 
 Anything missing on the OTLP path is still covered by the **Agent Sessions** dashboard (transcript path).
 

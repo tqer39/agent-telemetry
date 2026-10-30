@@ -158,7 +158,7 @@
       "gridPos": { "h": 4, "w": 4, "x": 12, "y": 6 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
-        { "expr": "sum(claude_code_commit_total)", "legendFormat": "Commits" }
+        { "expr": "sum(claude_code_commit_count_total)", "legendFormat": "Commits" }
       ],
       "fieldConfig": {
         "defaults": {
@@ -177,7 +177,7 @@
       "gridPos": { "h": 4, "w": 4, "x": 16, "y": 6 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
-        { "expr": "sum(claude_code_pull_request_total)", "legendFormat": "PRs" }
+        { "expr": "sum(claude_code_pull_request_count_total)", "legendFormat": "PRs" }
       ],
       "fieldConfig": {
         "defaults": {
@@ -196,7 +196,7 @@
       "gridPos": { "h": 4, "w": 4, "x": 20, "y": 6 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
-        { "expr": "sum(claude_code_lines_of_code_total)", "legendFormat": "LOC" }
+        { "expr": "sum(claude_code_lines_of_code_count_total)", "legendFormat": "LOC" }
       ],
       "fieldConfig": {
         "defaults": {

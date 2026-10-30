@@ -154,7 +154,7 @@ def main(argv: list[str] | None = None) -> int:
 
     p_serve = sub.add_parser("serve")
     common(p_serve)
-    p_serve.add_argument("--addr", default=os.environ.get("LISTEN_ADDR", "0.0.0.0"))
+    p_serve.add_argument("--addr", default=os.environ.get("LISTEN_ADDR", "127.0.0.1"))
     p_serve.add_argument("--port", type=int, default=int(os.environ.get("LISTEN_PORT", "9464")))
 
     p_report = sub.add_parser("report")

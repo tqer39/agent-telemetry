@@ -282,3 +282,46 @@ def test_indexer_handles_missing_dirs(tmp_path: Path) -> None:
     idx = Indexer(tmp_path / "nope", tmp_path / "nope2", lookback_days=1, idle_gap_seconds=300)
     assert idx.scan() == []
     assert set(idx.stats.sources_missing) == {"claude-code", "codex"}
+
+
+def test_bad_transcript_does_not_stop_other_files_or_log_content(tmp_path: Path, caplog) -> None:
+    root = tmp_path / "claude"
+    bad = write_jsonl(root / "bad.jsonl", claude_rows("bad"))
+    write_jsonl(root / "good.jsonl", claude_rows("good"))
+    idx = Indexer(root, None, lookback_days=1, idle_gap_seconds=300)
+    assert len(idx.scan()) == 2
+    bad.write_text('{"timestamp": "SECRET-DATA", "message": []}\n', encoding="utf-8")
+    original = idx.sources[0].parser
+
+    def parser(path: Path, idle_gap: float):
+        if path == bad:
+            raise ValueError("SECRET-DATA")
+        return original(path, idle_gap)
+
+    idx.sources[0].parser = parser
+    sessions = idx.scan()
+    assert {session.session_id for session in sessions} == {"good"}
+    assert idx.stats.file_errors == 1
+    assert "SECRET-DATA" not in caplog.text
+
+
+def test_timestamp_without_offset_is_utc() -> None:
+    from datetime import UTC, datetime
+
+    from session_indexer.model import parse_iso
+
+    assert parse_iso("2026-10-01T00:00:00") == datetime(2026, 10, 1, tzinfo=UTC)
+    assert parse_iso("2026-10-01T00:00:00Z") == datetime(2026, 10, 1, tzinfo=UTC)
+    assert parse_iso("not-a-time") is None
+
+
+def test_serve_defaults_to_loopback_and_honors_override(monkeypatch) -> None:
+    from session_indexer import cli
+
+    addresses = []
+    monkeypatch.setattr(cli, "cmd_serve", lambda args: addresses.append(args.addr) or 0)
+    monkeypatch.delenv("LISTEN_ADDR", raising=False)
+    assert cli.main(["serve"]) == 0
+    monkeypatch.setenv("LISTEN_ADDR", "0.0.0.0")
+    assert cli.main(["serve"]) == 0
+    assert addresses == ["127.0.0.1", "0.0.0.0"]

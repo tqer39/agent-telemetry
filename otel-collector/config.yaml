@@ -44,6 +44,15 @@ processors:
         statements:
           - set(attributes["cli_tool"], "claude-code") where IsMatch(attributes["service.name"], "^claude")
           - set(attributes["cli_tool"], "codex") where IsMatch(attributes["service.name"], "^codex")
+  # Tool events carry command arguments/output and prompts (Codex codex.tool_result,
+  # Claude tool_result with OTEL_LOG_TOOL_DETAILS). Drop them before anything is stored.
+  transform/redact:
+    error_mode: propagate
+    log_statements:
+      - context: log
+        statements:
+          - keep_keys(attributes, ["event.name", "session.id", "model", "tool_name", "duration_ms", "success", "decision", "tool_result_size_bytes"])
+          - set(body, "[redacted]")
 
 exporters:
   prometheusremotewrite:
@@ -85,5 +94,5 @@ service:
       exporters: [otlp/tempo, debug]
     logs:
       receivers: [otlp]
-      processors: [transform/cli_tool, resource, batch]
+      processors: [transform/redact, transform/cli_tool, resource, batch]
       exporters: [otlphttp/loki, debug]

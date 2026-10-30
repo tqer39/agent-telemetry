@@ -46,7 +46,7 @@ Desktop アプリは CLI より送るデータの種類が少ない可能性が�
 
 1. `.env` で `DEBUG_VERBOSITY=detailed` に設定し、`docker compose up -d otel-collector` を実行する。
 2. `mise run verify` を実行した状態で、各 Desktop アプリで小さなタスクを1つずつ実行する。
-3. アプリごとに、メトリクス・ログ・トレースのどれが届いたかを記録する。終わったら `basic` に戻す。
+3. アプリごとに、メトリクス・ログ・トレースのどれが届いたかを記録する。終わったら `basic` に戻し、もう一度 `docker compose up -d otel-collector` を実行する（実行中のコンテナは古い値のまま動き続けるため）。
 
 OTLP 経路で届かないデータがあっても、**Agent Sessions** ダッシュボード（会話記録の経路）で補えます。
 
