@@ -51,11 +51,18 @@ processors:
     trace_statements:
       - context: span
         statements:
-          - keep_keys(attributes, ["conversation.id", "session.id", "model", "tool_name", "duration_ms", "success"])
+          - keep_keys(attributes, ["conversation.id", "session.id", "model", "tool_name", "duration_ms", "success", "input_tokens", "output_tokens", "cache_read_tokens", "cache_creation_tokens", "status_code", "attempt"])
+          - delete_key(attributes, "input_tokens") where not (IsInt(attributes["input_tokens"]) or IsDouble(attributes["input_tokens"]))
+          - delete_key(attributes, "output_tokens") where not (IsInt(attributes["output_tokens"]) or IsDouble(attributes["output_tokens"]))
+          - delete_key(attributes, "cache_read_tokens") where not (IsInt(attributes["cache_read_tokens"]) or IsDouble(attributes["cache_read_tokens"]))
+          - delete_key(attributes, "cache_creation_tokens") where not (IsInt(attributes["cache_creation_tokens"]) or IsDouble(attributes["cache_creation_tokens"]))
+          - delete_key(attributes, "status_code") where not (IsInt(attributes["status_code"]) or IsDouble(attributes["status_code"]))
+          - delete_key(attributes, "attempt") where not (IsInt(attributes["attempt"]) or IsDouble(attributes["attempt"]))
           - set(status.message, "[redacted]")
       - context: spanevent
         statements:
-          - keep_keys(attributes, [])
+          - keep_keys(attributes, ["attempt", "client_request_id"])
+          - delete_key(attributes, "attempt") where not (IsInt(attributes["attempt"]) or IsDouble(attributes["attempt"]))
     log_statements:
       - context: log
         statements:

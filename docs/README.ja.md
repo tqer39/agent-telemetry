@@ -80,6 +80,8 @@ uv run --project session-indexer session-indexer schema ~/.codex/sessions/2026/1
 
 ## 🔒 セキュリティ
 
+トレースでは数値のトークン数・HTTP ステータス・リトライ診断を保持し、ツール本文は除去します。
+
 - すべてのポートを `127.0.0.1` にのみ公開しています。Grafana には初期パスワードがなく、匿名アクセスも無効です。
 - 会話記録のディレクトリは読み取り専用でマウントしています。マウント先のコンテナ自体も、読み取り専用・非 root・権限（capability）なしで動かしています。
 - Codex は `log_user_prompt = false` にしています。Claude Code は `OTEL_LOG_USER_PROMPTS=1` を設定しない限りプロンプトを伏せて送ります。

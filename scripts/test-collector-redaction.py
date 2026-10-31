@@ -45,6 +45,7 @@ with tempfile.TemporaryDirectory() as directory:
     try:
         port = subprocess.check_output(["docker", "port", cid, "4318/tcp"], text=True).strip().rsplit(":", 1)[1]
         attr = lambda key, value: {"key": key, "value": {"stringValue": value}}
+        numeric = lambda key, value: {"key": key, "value": {"intValue": str(value)}}
         logs = {
             "resourceLogs": [
                 {
@@ -78,12 +79,48 @@ with tempfile.TemporaryDirectory() as directory:
                                     "name": "safe-span",
                                     "startTimeUnixNano": "1",
                                     "endTimeUnixNano": "2",
-                                    "attributes": [attr("output", "SECRET-span")],
+                                    "attributes": [
+                                        attr("output", "SECRET-span"),
+                                        numeric("input_tokens", 101),
+                                        numeric("output_tokens", 202),
+                                        numeric("cache_read_tokens", 303),
+                                        numeric("cache_creation_tokens", 404),
+                                        numeric("status_code", 429),
+                                        numeric("attempt", 2),
+                                    ],
                                     "events": [
-                                        {"name": "tool.output", "timeUnixNano": "1", "attributes": [attr("content", "SECRET-event")]}
+                                        {
+                                            "name": "tool.output",
+                                            "timeUnixNano": "1",
+                                            "attributes": [attr("content", "SECRET-event")],
+                                        },
+                                        {
+                                            "name": "gen_ai.request.attempt",
+                                            "timeUnixNano": "1",
+                                            "attributes": [
+                                                numeric("attempt", 3),
+                                                attr("client_request_id", "safe-retry-id"),
+                                                attr("content", "SECRET-retry"),
+                                            ],
+                                        },
                                     ],
                                     "status": {"message": "SECRET-status"},
-                                }
+                                },
+                                {
+                                    "traceId": "03" * 16,
+                                    "spanId": "04" * 8,
+                                    "name": "invalid-counter",
+                                    "startTimeUnixNano": "1",
+                                    "endTimeUnixNano": "2",
+                                    "attributes": [attr("input_tokens", "SECRET-counter")],
+                                    "events": [
+                                        {
+                                            "name": "gen_ai.request.attempt",
+                                            "timeUnixNano": "1",
+                                            "attributes": [attr("attempt", "SECRET-attempt")],
+                                        }
+                                    ],
+                                },
                             ]
                         }
                     ]
@@ -92,7 +129,9 @@ with tempfile.TemporaryDirectory() as directory:
         }
         for endpoint, payload in [("logs", logs), ("traces", traces)]:
             req = urllib.request.Request(
-                f"http://127.0.0.1:{port}/v1/{endpoint}", data=json.dumps(payload).encode(), headers={"Content-Type": "application/json"}
+                f"http://127.0.0.1:{port}/v1/{endpoint}",
+                data=json.dumps(payload).encode(),
+                headers={"Content-Type": "application/json"},
             )
             for attempt in range(30):
                 try:
@@ -107,6 +146,16 @@ with tempfile.TemporaryDirectory() as directory:
         result = subprocess.check_output(["docker", "logs", cid], stderr=subprocess.STDOUT, text=True)
         assert "SECRET-" not in result
         assert "conversation-test" in result and "skill_activated" in result and "safe-span" in result
-        print("Collector log and trace redaction passed")
+        for key, value in [
+            ("input_tokens", 101),
+            ("output_tokens", 202),
+            ("cache_read_tokens", 303),
+            ("cache_creation_tokens", 404),
+            ("status_code", 429),
+            ("attempt", 2),
+        ]:
+            assert f"{key}: Int({value})" in result, key
+        assert "safe-retry-id" in result and "attempt: Int(3)" in result
+        print("Collector redaction and safe trace diagnostics passed")
     finally:
         subprocess.run(["docker", "stop", cid], stdout=subprocess.DEVNULL, check=False)

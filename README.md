@@ -75,6 +75,7 @@ uv run --project session-indexer session-indexer schema ~/.codex/sessions/2026/1
 ## Security
 
 - Every port is bound to `127.0.0.1`. Grafana has no default password and anonymous access is off.
+- Trace redaction retains numeric token counts, HTTP status, and retry diagnostics while excluding tool content.
 - Transcript dirs are mounted read-only into a read-only, non-root, capability-free container.
 - `log_user_prompt = false` for Codex; Claude Code redacts prompts unless `OTEL_LOG_USER_PROMPTS=1`.
 
