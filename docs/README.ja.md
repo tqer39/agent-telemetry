@@ -89,3 +89,31 @@ uv run --project session-indexer session-indexer schema ~/.codex/sessions/2026/1
 ## 🙏 クレジット
 
 [Mizune/llm-cli-telemetry](https://github.com/Mizune/llm-cli-telemetry)（MIT、コミット `6d224e8`）をベースにしています。Loki と Tempo の設定、データソース定義、記録ルール、ダッシュボード4種を流用しました。ライセンスは `docs/THIRD_PARTY_LICENSE-llm-cli-telemetry` を参照してください。
+
+## 共通開発ルール
+
+`session-indexer` に dev-standards の `python-uv` プロファイルを適用しています。
+作業開始時に `mise run standards:prepare`、終了前に `mise run standards:verify` と
+`mise run standards:finish` を実行します。`mise run check` は設定整合性、既存の
+Lefthook、Ruff、pytest、パッケージビルドを検査します。
+従来のテストと lint をまとめたタスクは `mise run indexer:test` として保持しています。
+
+設定は `.standards/mise.project.toml`、`.standards/tasks.project.toml` と
+`.standards/*.local` の正本を編集します。
+`./.standards/cache/dev-standards plan --output .standards/plans/update.json` で計画を保存・確認し、
+`./.standards/cache/dev-standards apply --plan .standards/plans/update.json` で適用します。
+Python を継続採用する理由は `docs/decisions/0001-language.md` に記録しています。
+既存の Compose 操作とクライアント設定タスクの名前は維持しています。
+既存 CI と生成された Dev Standards workflow は併存します。
+
+ローカルの保守台帳には登録済みですが、今回の導入では定期実行を設定していません。
+GitHub から更新を配布するには、dev-standards の Python 対応と利用先の導入変更を
+それぞれコミットし、既定ブランチへ統合する必要があります。
+
+Renovate の hook は mise で固定した Node/npx を直接起動し、システムの別版 Node が
+異なる ABI の RE2 を読み込むことを防ぎます。RE2 のフォールバックは検査失敗として扱います。
+Renovate の固定版は `renovate.json5` の custom manager で引き続き更新対象にしています。
+
+新規 checkout では、Python/uv 対応を含む同じ版の dev-standards CLI をビルド・インストールし、
+`dev-standards sync` で Git 管理外の CLI キャッシュを配置してから共通タスクを実行します。
+利用先の統合より先に dev-standards 本体の変更を統合してください。

@@ -84,3 +84,33 @@ uv run --project session-indexer session-indexer schema ~/.codex/sessions/2026/1
 Based on [Mizune/llm-cli-telemetry](https://github.com/Mizune/llm-cli-telemetry) (MIT, commit `6d224e8`): Loki/Tempo configs, datasources, recording rule and four dashboards. See `docs/THIRD_PARTY_LICENSE-llm-cli-telemetry`.
 
 Japanese: [docs/README.ja.md](docs/README.ja.md)
+
+## Development standards
+
+This repository uses the `python-uv` profile of dev-standards for `session-indexer`.
+Run `mise run standards:prepare` before working and `mise run standards:verify`
+followed by `mise run standards:finish` before finishing. `mise run check` runs the
+configuration checks, existing Lefthook checks, Ruff, pytest, and package build.
+The previous combined test task is available as `mise run indexer:test`.
+
+Edit project settings in `.standards/mise.project.toml`,
+`.standards/tasks.project.toml`, and the other `.standards/*.local` sources.
+Save and review a plan with
+`./.standards/cache/dev-standards plan --output .standards/plans/update.json`,
+then apply it with `./.standards/cache/dev-standards apply --plan .standards/plans/update.json`.
+`docs/decisions/0001-language.md` records why Python is retained.
+Existing Compose operations and client settings tasks keep their names.
+The original CI workflow remains alongside the generated Dev Standards workflow.
+
+The local maintenance fleet is registered; scheduled maintenance is not configured
+by this onboarding. The Python profile changes in dev-standards and this adoption
+must be committed and integrated before updates can be distributed from GitHub.
+
+The Renovate hook invokes mise's pinned Node/npx directly, so a different system
+Node cannot load native RE2 modules from the wrong ABI. RE2 fallback is a failed
+check. Its pinned Renovate version remains tracked by the custom manager in
+`renovate.json5`.
+
+On a new checkout, build/install the matching dev-standards CLI from its Python/uv
+support change, then run `dev-standards sync` to populate the ignored CLI cache
+before using the standards tasks. Source changes must be integrated first.

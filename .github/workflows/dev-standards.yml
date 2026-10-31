@@ -1,0 +1,33 @@
+name: Dev Standards
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  standards-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: jdx/mise-action@6be3c7ed4c21d4f76b208d351d95aac273ebb76d
+        with:
+          version: 2026.10.20
+      - name: Confirm managed configuration
+        run: |
+          python3 - <<'PYTHON'
+          import json
+          from pathlib import Path
+          state = json.loads(Path('.standards/state.json').read_bytes())
+          lock = json.loads(Path('.standards/lock.json').read_bytes())
+          required = {'.editorconfig', '.gitignore', '.gitattributes', 'mise.toml', '.standards/tasks.standards.toml', 'AGENTS.md', '.codex/hooks.json', '.standards/rules.md', '.github/workflows/dev-standards.yml'}
+          assert state['schemaVersion'] == 1
+          assert state['bundleSha256'] == lock['bundleSha256']
+          assert set(state['files']) == required
+          for name, expected in state['files'].items():
+              target = Path(name)
+              assert not target.is_symlink(), name
+              assert expected['exists'] and target.read_bytes() == expected['content'].encode(), name
+          PYTHON
+      - run: mise run lint
+      - run: mise run format:check
+      - run: mise run test
+      - run: mise run build

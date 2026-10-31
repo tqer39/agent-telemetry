@@ -1,0 +1,16 @@
+
+# dev-standards: deterministic checkout
+*.py text eol=lf
+session-indexer/pyproject.toml text eol=lf
+session-indexer/uv.lock text eol=lf
+/.editorconfig text eol=lf
+/mise.toml text eol=lf
+/.gitattributes text eol=lf
+/AGENTS.md text eol=lf
+/.codex/hooks.json text eol=lf
+/.github/workflows/dev-standards.yml text eol=lf
+/.gitignore -text whitespace=-blank-at-eol
+/.standards/** text eol=lf
+/.standards/gitignore.local -text whitespace=-blank-at-eol
+/.standards/vendor/gitignore/*.txt -text whitespace=-blank-at-eol
+/docs/decisions/0001-language.md text eol=lf

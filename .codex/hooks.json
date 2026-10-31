@@ -1,0 +1,40 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "command": "\"$(git rev-parse --show-toplevel)/.standards/cache/dev-standards\" hook",
+            "commandWindows": "powershell -NoProfile -Command \"\u0026 ((git rev-parse --show-toplevel) + '/.standards/cache/dev-standards.exe') hook\"",
+            "timeout": 30,
+            "type": "command"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "command": "\"$(git rev-parse --show-toplevel)/.standards/cache/dev-standards\" hook",
+            "commandWindows": "powershell -NoProfile -Command \"\u0026 ((git rev-parse --show-toplevel) + '/.standards/cache/dev-standards.exe') hook\"",
+            "timeout": 30,
+            "type": "command"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "command": "\"$(git rev-parse --show-toplevel)/.standards/cache/dev-standards\" hook",
+            "commandWindows": "powershell -NoProfile -Command \"\u0026 ((git rev-parse --show-toplevel) + '/.standards/cache/dev-standards.exe') hook\"",
+            "timeout": 30,
+            "type": "command"
+          }
+        ]
+      }
+    ]
+  }
+}
