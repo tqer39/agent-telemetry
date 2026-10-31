@@ -1,0 +1,30 @@
+# Lefthook configuration (same tooling as tqer39/terraform-github).
+# See https://lefthook.dev/configuration/
+pre-commit:
+  parallel: true
+  commands:
+    betterleaks:
+      run: scripts/lint/betterleaks.sh {staged_files}
+    yamllint:
+      glob: "*.{yml,yaml}"
+      run: yamllint --no-warnings {staged_files}
+    actionlint:
+      glob: ".github/workflows/*.{yml,yaml}"
+      run: actionlint {staged_files}
+    check-json:
+      glob: "*.json"
+      run: python3 -c 'import json,sys; [json.load(open(f)) for f in sys.argv[1:]]' {staged_files}
+    ruff:
+      glob: "session-indexer/**/*.py"
+      run: uv run --project session-indexer ruff check {staged_files} && uv run --project session-indexer ruff format --check {staged_files}
+    compose-config:
+      glob: "compose.yaml"
+      run: GF_SECURITY_ADMIN_PASSWORD=lint docker compose config -q
+    renovate-config-validator:
+      glob: "renovate.json5"
+      run: npx --yes --prefer-offline --package=renovate@44.155.8 -- renovate-config-validator {staged_files}
+
+pre-push:
+  commands:
+    pytest:
+      run: uv run --project session-indexer pytest -q

@@ -1,0 +1,113 @@
+# OpenTelemetry Collector config (static; no generator script).
+# Receives OTLP from Claude Desktop / Claude Code and Codex Desktop / Codex CLI.
+# Transcript JSONL is NOT shipped raw: session-indexer summarizes it into metrics
+# so that source code, secrets and prompts never land in Loki.
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch:
+    timeout: 5s
+    send_batch_size: 1024
+  # Claude Code exports delta temporality by default; Prometheus needs cumulative.
+  deltatocumulative: {}
+  resource:
+    attributes:
+      - key: deployment.environment
+        value: local
+        action: upsert
+  # Normalize a tool label so dashboards can split Claude vs Codex.
+  transform/cli_tool:
+    error_mode: ignore
+    log_statements:
+      - context: resource
+        statements:
+          - set(attributes["cli_tool"], "claude-code") where IsMatch(attributes["service.name"], "^claude")
+          - set(attributes["cli_tool"], "codex") where IsMatch(attributes["service.name"], "^codex")
+    metric_statements:
+      - context: resource
+        statements:
+          - set(attributes["cli_tool"], "claude-code") where IsMatch(attributes["service.name"], "^claude")
+          - set(attributes["cli_tool"], "codex") where IsMatch(attributes["service.name"], "^codex")
+    trace_statements:
+      - context: resource
+        statements:
+          - set(attributes["cli_tool"], "claude-code") where IsMatch(attributes["service.name"], "^claude")
+          - set(attributes["cli_tool"], "codex") where IsMatch(attributes["service.name"], "^codex")
+  # Tool events carry command arguments/output and prompts (Codex codex.tool_result,
+  # Claude tool_result with OTEL_LOG_TOOL_DETAILS). Drop them before anything is stored.
+  transform/redact:
+    error_mode: propagate
+    trace_statements:
+      - context: span
+        statements:
+          - keep_keys(attributes, ["conversation.id", "session.id", "model", "tool_name", "duration_ms", "success", "input_tokens", "output_tokens", "cache_read_tokens", "cache_creation_tokens", "status_code", "attempt"])
+          - delete_key(attributes, "input_tokens") where not (IsInt(attributes["input_tokens"]) or IsDouble(attributes["input_tokens"]))
+          - delete_key(attributes, "output_tokens") where not (IsInt(attributes["output_tokens"]) or IsDouble(attributes["output_tokens"]))
+          - delete_key(attributes, "cache_read_tokens") where not (IsInt(attributes["cache_read_tokens"]) or IsDouble(attributes["cache_read_tokens"]))
+          - delete_key(attributes, "cache_creation_tokens") where not (IsInt(attributes["cache_creation_tokens"]) or IsDouble(attributes["cache_creation_tokens"]))
+          - delete_key(attributes, "status_code") where not (IsInt(attributes["status_code"]) or IsDouble(attributes["status_code"]))
+          - delete_key(attributes, "attempt") where not (IsInt(attributes["attempt"]) or IsDouble(attributes["attempt"]))
+          - set(status.message, "[redacted]")
+      - context: spanevent
+        statements:
+          - keep_keys(attributes, ["attempt", "client_request_id"])
+          - delete_key(attributes, "attempt") where not (IsInt(attributes["attempt"]) or IsDouble(attributes["attempt"]))
+    log_statements:
+      - context: log
+        statements:
+          - keep_keys(attributes, ["event.name", "session.id", "conversation.id", "model", "tool_name", "duration_ms", "success", "decision", "tool_result_size_bytes"])
+          - set(body, "[redacted]")
+
+exporters:
+  prometheusremotewrite:
+    endpoint: http://prometheus:9090/api/v1/write
+    resource_to_telemetry_conversion:
+      enabled: true
+  otlp/tempo:
+    endpoint: tempo:4317
+    tls:
+      insecure: true
+  otlphttp/loki:
+    endpoint: http://loki:3100/otlp
+    tls:
+      insecure: true
+  debug:
+    verbosity: ${env:DEBUG_VERBOSITY}
+
+service:
+  telemetry:
+    logs:
+      level: info
+    metrics:
+      level: basic
+      readers:
+        - pull:
+            exporter:
+              prometheus:
+                host: 0.0.0.0
+                port: 8888
+  extensions: [health_check]
+  pipelines:
+    metrics:
+      receivers: [otlp]
+      processors: [deltatocumulative, transform/cli_tool, resource, batch]
+      exporters: [prometheusremotewrite, debug]
+    traces:
+      receivers: [otlp]
+      processors: [transform/redact, transform/cli_tool, resource, batch]
+      exporters: [otlp/tempo, debug]
+    logs:
+      receivers: [otlp]
+      processors: [transform/redact, transform/cli_tool, resource, batch]
+      exporters: [otlphttp/loki, debug]
