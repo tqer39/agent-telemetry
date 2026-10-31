@@ -6,8 +6,8 @@
   "customManagers": [
     {
       "customType": "regex",
-      "managerFilePatterns": ["/^lefthook\\.yml$/"],
-      "matchStrings": ["--package=renovate@(?<currentValue>\\d+\\.\\d+\\.\\d+)"],
+      "managerFilePatterns": ["/^scripts/lint/validate_renovate\\.py$/"],
+      "matchStrings": ["RENOVATE_VERSION = \"(?<currentValue>\\d+\\.\\d+\\.\\d+)\""],
       "depNameTemplate": "renovate",
       "datasourceTemplate": "npm",
       "versioningTemplate": "npm"

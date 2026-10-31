@@ -22,7 +22,7 @@ pre-commit:
       run: GF_SECURITY_ADMIN_PASSWORD=lint docker compose config -q
     renovate-config-validator:
       glob: "renovate.json5"
-      run: npx --yes --prefer-offline --package=renovate@44.155.8 -- renovate-config-validator {staged_files}
+      run: python3 scripts/lint/validate_renovate.py {staged_files}
 
 pre-push:
   commands:

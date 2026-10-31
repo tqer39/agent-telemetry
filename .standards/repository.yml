@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "standard": {
+    "repository": "tqer39/dev-standards",
+    "version": "0.2.1"
+  },
+  "platforms": [
+    "macos",
+    "linux",
+    "windows"
+  ],
+  "components": [
+    {
+      "name": "main",
+      "path": "session-indexer",
+      "profile": "python-uv"
+    }
+  ],
+  "ai": {
+    "targets": [
+      "codexcli"
+    ]
+  },
+  "gitignore": {
+    "templates": [
+      "python",
+      "linux",
+      "macos",
+      "windows"
+    ],
+    "local": ".standards/gitignore.local"
+  },
+  "update": {
+    "channel": "stable",
+    "allowMajor": false,
+    "rollout": "standard"
+  },
+  "ci": {
+    "prBudgetSeconds": 600,
+    "minimumSamples": 20,
+    "breachWindows": 2
+  }
+}

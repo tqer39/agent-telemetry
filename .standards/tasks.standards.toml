@@ -1,0 +1,42 @@
+[bootstrap]
+run = "uv sync --locked --project session-indexer"
+
+[lint]
+depends = ["project:lint"]
+run = "uv run --locked --project session-indexer ruff check session-indexer"
+
+[format]
+run = "uv run --locked --project session-indexer ruff format session-indexer"
+
+["format:check"]
+depends = ["project:format:check"]
+run = "uv run --locked --project session-indexer ruff format --check session-indexer"
+
+[test]
+run = "uv run --locked --project session-indexer pytest session-indexer"
+
+[build]
+run = "uv build --project session-indexer --out-dir session-indexer/dist"
+
+[check]
+depends = ["standards:check", "lint", "format:check", "test", "build"]
+
+["standards:check"]
+run = "./.standards/cache/dev-standards check"
+run_windows = '.\.standards\cache\dev-standards.exe check'
+
+["standards:plan"]
+run = "./.standards/cache/dev-standards plan"
+run_windows = '.\.standards\cache\dev-standards.exe plan'
+
+["standards:verify"]
+run = "./.standards/cache/dev-standards verify"
+run_windows = '.\.standards\cache\dev-standards.exe verify'
+
+["standards:prepare"]
+run = "./.standards/cache/dev-standards prepare"
+run_windows = '.\.standards\cache\dev-standards.exe prepare'
+
+["standards:finish"]
+run = "./.standards/cache/dev-standards finish"
+run_windows = '.\.standards\cache\dev-standards.exe finish'

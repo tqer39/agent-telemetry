@@ -1,0 +1,7 @@
+# 既存の Lefthook 検査を共通 lint に接続する。
+["project:lint"]
+description = "既存の Git hooks と設定 lint を実行"
+run = ["BETTERLEAKS_ALL_FILES=true lefthook run pre-commit --all-files", "yamllint --no-warnings .", "actionlint", "uv run --locked --project session-indexer ruff check scripts/lint/validate_renovate.py"]
+
+["project:format:check"]
+run = "uv run --locked --project session-indexer ruff format --check scripts/lint/validate_renovate.py"
