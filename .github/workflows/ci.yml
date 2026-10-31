@@ -30,6 +30,8 @@ jobs:
           docker run --rm -e DEBUG_VERBOSITY=basic
           -v "$PWD/otel-collector/config.yaml:/cfg.yaml:ro"
           otel/opentelemetry-collector-contrib:0.120.0 validate --config=/cfg.yaml
+      - name: collector redacts sensitive data
+        run: python3 scripts/test-collector-redaction.py
       - name: prometheus config and rules are valid
         run: >-
           docker run --rm --entrypoint promtool

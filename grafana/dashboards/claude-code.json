@@ -401,12 +401,12 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "sum(count_over_time({service_name=\"claude-code\"} |= \"skill_activated\" [5m]))",
+          "expr": "sum(count_over_time({service_name=\"claude-code\"} | event_name = \"skill_activated\" [5m]))",
           "legendFormat": "Skill Activations",
           "refId": "A"
         },
         {
-          "expr": "sum(count_over_time({service_name=\"claude-code\"} |= \"plugin_installed\" [5m]))",
+          "expr": "sum(count_over_time({service_name=\"claude-code\"} | event_name = \"plugin_installed\" [5m]))",
           "legendFormat": "Plugin Installs",
           "refId": "B"
         }
