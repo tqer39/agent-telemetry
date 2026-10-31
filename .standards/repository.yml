@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "standard": {
     "repository": "tqer39/dev-standards",
-    "version": "0.2.1"
+    "version": "0.2.3"
   },
   "platforms": [
     "macos",
