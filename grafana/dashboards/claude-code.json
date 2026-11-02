@@ -1,7 +1,7 @@
 {
   "uid": "claude-code",
   "title": "Claude Code",
-  "description": "Claude Code telemetry – cost efficiency, productivity, and token usage",
+  "description": "Claude Code のコスト、作業実績、トークン使用量を表示します。",
   "tags": ["llm-telemetry", "claude-code"],
   "timezone": "browser",
   "schemaVersion": 39,
@@ -15,14 +15,14 @@
     {
       "id": 1,
       "type": "row",
-      "title": "Cost & Efficiency",
+      "title": "コストと効率",
       "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
       "collapsed": false
     },
     {
       "id": 2,
       "type": "stat",
-      "title": "Total Cost",
+      "title": "合計コスト",
       "gridPos": { "h": 4, "w": 6, "x": 0, "y": 1 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
@@ -44,8 +44,8 @@
     {
       "id": 3,
       "type": "stat",
-      "title": "Cost per Session",
-      "description": "Average cost per session",
+      "title": "セッションあたりのコスト",
+      "description": "セッションあたりの平均コストです。",
       "gridPos": { "h": 4, "w": 6, "x": 6, "y": 1 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
@@ -67,8 +67,8 @@
     {
       "id": 4,
       "type": "stat",
-      "title": "Cache Hit Rate",
-      "description": "Cache read tokens / (input + cache read). Higher = better cost efficiency.",
+      "title": "キャッシュヒット率",
+      "description": "入力とキャッシュ読み取りを合計したうち、キャッシュ読み取りが占める割合です。",
       "gridPos": { "h": 4, "w": 6, "x": 12, "y": 1 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
@@ -90,8 +90,8 @@
     {
       "id": 5,
       "type": "stat",
-      "title": "Cost by Model",
-      "description": "Cost breakdown per model",
+      "title": "モデル別コスト",
+      "description": "モデルごとのコスト内訳です。",
       "gridPos": { "h": 4, "w": 6, "x": 18, "y": 1 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
@@ -112,14 +112,14 @@
     {
       "id": 6,
       "type": "row",
-      "title": "Token Usage",
+      "title": "トークン使用量",
       "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 },
       "collapsed": false
     },
     {
       "id": 7,
       "type": "stat",
-      "title": "Input Tokens",
+      "title": "入力トークン",
       "gridPos": { "h": 4, "w": 6, "x": 0, "y": 6 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
@@ -137,7 +137,7 @@
     {
       "id": 8,
       "type": "stat",
-      "title": "Output Tokens",
+      "title": "出力トークン",
       "gridPos": { "h": 4, "w": 6, "x": 6, "y": 6 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
@@ -155,7 +155,7 @@
     {
       "id": 9,
       "type": "stat",
-      "title": "Cache Read Tokens",
+      "title": "キャッシュ読み取りトークン",
       "gridPos": { "h": 4, "w": 6, "x": 12, "y": 6 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
@@ -173,8 +173,8 @@
     {
       "id": 10,
       "type": "stat",
-      "title": "Active Time",
-      "description": "Total active session time",
+      "title": "実作業時間",
+      "description": "セッションの実作業時間の合計です。",
       "gridPos": { "h": 4, "w": 6, "x": 18, "y": 6 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
@@ -192,7 +192,7 @@
     {
       "id": 11,
       "type": "timeseries",
-      "title": "Token Usage Over Time",
+      "title": "トークン使用量の推移",
       "gridPos": { "h": 8, "w": 16, "x": 0, "y": 10 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
@@ -223,7 +223,7 @@
     {
       "id": 12,
       "type": "timeseries",
-      "title": "Cost Over Time",
+      "title": "コストの推移",
       "gridPos": { "h": 8, "w": 8, "x": 16, "y": 10 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
@@ -244,14 +244,14 @@
     {
       "id": 13,
       "type": "row",
-      "title": "Productivity",
+      "title": "作業実績",
       "gridPos": { "h": 1, "w": 24, "x": 0, "y": 18 },
       "collapsed": false
     },
     {
       "id": 14,
       "type": "stat",
-      "title": "Sessions",
+      "title": "セッション数",
       "gridPos": { "h": 4, "w": 4, "x": 0, "y": 19 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
@@ -268,7 +268,7 @@
     {
       "id": 15,
       "type": "stat",
-      "title": "Commits",
+      "title": "コミット数",
       "gridPos": { "h": 4, "w": 5, "x": 4, "y": 19 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
@@ -285,7 +285,7 @@
     {
       "id": 16,
       "type": "stat",
-      "title": "Pull Requests",
+      "title": "プルリクエスト数",
       "gridPos": { "h": 4, "w": 5, "x": 9, "y": 19 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
@@ -302,7 +302,7 @@
     {
       "id": 17,
       "type": "stat",
-      "title": "Lines of Code",
+      "title": "変更行数",
       "gridPos": { "h": 4, "w": 5, "x": 14, "y": 19 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
@@ -319,7 +319,7 @@
     {
       "id": 18,
       "type": "stat",
-      "title": "Code Edits",
+      "title": "コード編集数",
       "gridPos": { "h": 4, "w": 5, "x": 19, "y": 19 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
@@ -336,8 +336,8 @@
     {
       "id": 19,
       "type": "timeseries",
-      "title": "Productivity Over Time",
-      "description": "Commits, PRs, code edits, and lines of code over time",
+      "title": "作業実績の推移",
+      "description": "コミット、PR、コード編集、変更行数の推移です。",
       "gridPos": { "h": 8, "w": 24, "x": 0, "y": 23 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
@@ -363,14 +363,14 @@
     {
       "id": 20,
       "type": "row",
-      "title": "Details",
+      "title": "詳細",
       "gridPos": { "h": 1, "w": 24, "x": 0, "y": 31 },
       "collapsed": false
     },
     {
       "id": 21,
       "type": "table",
-      "title": "Token Usage by Model & Session",
+      "title": "モデル・セッション別のトークン使用量",
       "gridPos": { "h": 8, "w": 24, "x": 0, "y": 32 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
@@ -388,15 +388,15 @@
     {
       "id": 22,
       "type": "row",
-      "title": "Ecosystem",
+      "title": "スキル・プラグイン",
       "gridPos": { "h": 1, "w": 24, "x": 0, "y": 40 },
       "collapsed": false
     },
     {
       "id": 23,
       "type": "timeseries",
-      "title": "Skill & Plugin Activity",
-      "description": "Skill activations and plugin installations from Claude Code events",
+      "title": "スキル・プラグインの利用",
+      "description": "Claude Code のイベントから集計したスキル起動とプラグイン導入です。",
       "gridPos": { "h": 8, "w": 24, "x": 0, "y": 41 },
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
@@ -422,14 +422,14 @@
     {
       "id": 24,
       "type": "row",
-      "title": "Logs",
+      "title": "ログ",
       "gridPos": { "h": 1, "w": 24, "x": 0, "y": 49 },
       "collapsed": false
     },
     {
       "id": 25,
       "type": "logs",
-      "title": "Event Logs",
+      "title": "イベントログ",
       "gridPos": { "h": 10, "w": 24, "x": 0, "y": 50 },
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [

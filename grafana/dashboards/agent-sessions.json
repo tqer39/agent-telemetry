@@ -1,5 +1,5 @@
 {
-  "title": "Agent Sessions (Claude + Codex)",
+  "title": "エージェントの作業状況（Claude・Codex）",
   "uid": "agent-sessions",
   "tags": [
     "agent-telemetry",
@@ -19,7 +19,7 @@
     "list": [
       {
         "name": "tool",
-        "label": "tool",
+        "label": "ツール",
         "type": "query",
         "datasource": {
           "type": "prometheus",
@@ -47,7 +47,7 @@
       },
       {
         "name": "project",
-        "label": "project",
+        "label": "プロジェクト",
         "type": "query",
         "datasource": {
           "type": "prometheus",
@@ -91,13 +91,13 @@
       },
       "options": {
         "mode": "markdown",
-        "content": "Per-session summaries parsed from `~/.claude/projects` and `~/.codex/sessions` by **session-indexer**. Only sessions that **started inside the selected time range** are counted. *active* = time between events, excluding idle gaps longer than `IDLE_GAP_SECONDS`."
+        "content": "対象は選択期間内に開始したセッションです。改善点は一覧を「再実行」「反復」「失敗」で並べ替えて探します。回数が多いだけで問題とは断定できません。"
       }
     },
     {
       "id": 2,
       "type": "stat",
-      "title": "Sessions",
+      "title": "セッション数",
       "description": "",
       "datasource": {
         "type": "prometheus",
@@ -149,8 +149,8 @@
     {
       "id": 3,
       "type": "stat",
-      "title": "Active time",
-      "description": "",
+      "title": "実作業時間",
+      "description": "イベント間の時間を合計し、一定時間以上の無操作を除外します。",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -201,8 +201,8 @@
     {
       "id": 4,
       "type": "stat",
-      "title": "Tokens (in+out)",
-      "description": "",
+      "title": "トークン数（入力＋出力）",
+      "description": "キャッシュの読み取り・書き込み分を除いた入力と、出力の合計です。費用を直接表すものではありません。",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -253,8 +253,8 @@
     {
       "id": 5,
       "type": "stat",
-      "title": "Cache hit ratio",
-      "description": "Token-weighted: cache_read / all input-side tokens",
+      "title": "キャッシュヒット率",
+      "description": "入力側トークンに占めるキャッシュ読み取りの割合です。",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -306,8 +306,8 @@
     {
       "id": 6,
       "type": "stat",
-      "title": "Tool failure rate",
-      "description": "",
+      "title": "ツール失敗率",
+      "description": "ツール呼び出しのうち失敗した割合です。失敗の原因はここだけでは分かりません。",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -359,8 +359,8 @@
     {
       "id": 7,
       "type": "stat",
-      "title": "Retries after failure",
-      "description": "Same shell command re-run after its last run failed: the loop signal",
+      "title": "失敗後の再実行",
+      "description": "失敗したシェルコマンドと同じコマンドを再実行した回数です。調査や修正による正常な再実行も含みます。",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -411,7 +411,7 @@
     {
       "id": 8,
       "type": "table",
-      "title": "Sessions (sort by any column)",
+      "title": "セッション一覧（列をクリックして並べ替え）",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -544,15 +544,18 @@
               "Time": true
             },
             "renameByName": {
-              "Value #A": "start",
-              "Value #B": "active",
-              "Value #C": "wall",
-              "Value #D": "tokens",
-              "Value #E": "cache",
-              "Value #F": "calls",
-              "Value #G": "fails",
-              "Value #H": "repeated",
-              "Value #I": "retries"
+              "Value #A": "開始時刻",
+              "Value #B": "実作業時間",
+              "Value #C": "経過時間",
+              "Value #D": "トークン数",
+              "Value #E": "キャッシュ率",
+              "Value #F": "呼び出し",
+              "Value #G": "失敗",
+              "Value #H": "反復",
+              "Value #I": "再実行",
+              "tool": "ツール",
+              "project": "プロジェクト",
+              "session_id": "セッションID"
             },
             "indexByName": {
               "tool": 0,
@@ -573,7 +576,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "start"
+              "options": "開始時刻"
             },
             "properties": [
               {
@@ -585,7 +588,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "active"
+              "options": "実作業時間"
             },
             "properties": [
               {
@@ -597,7 +600,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "wall"
+              "options": "経過時間"
             },
             "properties": [
               {
@@ -609,7 +612,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "tokens"
+              "options": "トークン数"
             },
             "properties": [
               {
@@ -621,7 +624,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "cache"
+              "options": "キャッシュ率"
             },
             "properties": [
               {
@@ -633,7 +636,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "calls"
+              "options": "呼び出し"
             },
             "properties": [
               {
@@ -645,7 +648,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "fails"
+              "options": "失敗"
             },
             "properties": [
               {
@@ -657,7 +660,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "repeated"
+              "options": "反復"
             },
             "properties": [
               {
@@ -669,7 +672,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "retries"
+              "options": "再実行"
             },
             "properties": [
               {
@@ -681,7 +684,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "retries"
+              "options": "再実行"
             },
             "properties": [
               {
@@ -716,7 +719,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "cache"
+              "options": "キャッシュ率"
             },
             "properties": [
               {
@@ -731,19 +734,20 @@
         "showHeader": true,
         "sortBy": [
           {
-            "displayName": "start",
+            "displayName": "開始時刻",
             "desc": true
           }
         ],
         "footer": {
           "show": false
         }
-      }
+      },
+      "description": "反復・失敗・再実行・実作業時間の大きいセッションから確認します。数値だけで問題とは判断できません。"
     },
     {
       "id": 9,
       "type": "bargauge",
-      "title": "Active time by project",
+      "title": "プロジェクト別の実作業時間",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -794,7 +798,7 @@
     {
       "id": 10,
       "type": "bargauge",
-      "title": "Tokens by project",
+      "title": "プロジェクト別のトークン数",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -845,7 +849,7 @@
     {
       "id": 11,
       "type": "bargauge",
-      "title": "Repeated shell commands by project",
+      "title": "プロジェクト別の同一コマンド反復",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -891,12 +895,13 @@
           "values": false
         },
         "valueMode": "color"
-      }
+      },
+      "description": "各ログファイル内で同じシェルコマンドを繰り返した回数を合計します。親とサブエージェントなど、別ファイル間の反復は数えません。検証や状態確認でも増えます。"
     },
     {
       "id": 12,
       "type": "bargauge",
-      "title": "Tool failures by project",
+      "title": "プロジェクト別のツール失敗数",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -942,12 +947,13 @@
           "values": false
         },
         "valueMode": "color"
-      }
+      },
+      "description": "ツール呼び出しの失敗数です。作業量の多いプロジェクトほど増えやすいため、セッション数や呼び出し数も合わせて確認します。"
     },
     {
       "id": 13,
       "type": "stat",
-      "title": "Indexer health",
+      "title": "集計の稼働状況",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -966,7 +972,7 @@
           },
           "expr": "agent_indexer_files_scanned",
           "refId": "A",
-          "legendFormat": "files scanned",
+          "legendFormat": "走査ファイル数",
           "instant": true,
           "range": false,
           "format": "time_series"
@@ -978,7 +984,7 @@
           },
           "expr": "agent_indexer_file_errors",
           "refId": "B",
-          "legendFormat": "file errors",
+          "legendFormat": "ファイルエラー",
           "instant": true,
           "range": false,
           "format": "time_series"
@@ -990,7 +996,7 @@
           },
           "expr": "time() - agent_indexer_last_scan_timestamp_seconds",
           "refId": "C",
-          "legendFormat": "seconds since last scan",
+          "legendFormat": "最終走査からの秒数",
           "instant": true,
           "range": false,
           "format": "time_series"
@@ -1002,7 +1008,7 @@
           },
           "expr": "agent_indexer_source_missing",
           "refId": "D",
-          "legendFormat": "missing dir: {{tool}}",
+          "legendFormat": "未検出のディレクトリ: {{tool}}",
           "instant": true,
           "range": false,
           "format": "time_series"
@@ -1025,7 +1031,8 @@
         "textMode": "value_and_name",
         "graphMode": "none",
         "colorMode": "none"
-      }
+      },
+      "description": "選択期間の終了時点の稼働状況です。現在の確認では終了時刻を now にし、ファイルエラーと未検出のディレクトリが 0 か、最終走査からの秒数が増え続けていないかを確認します。過去の固定期間では現在の停止を検出できません。"
     }
   ]
 }
