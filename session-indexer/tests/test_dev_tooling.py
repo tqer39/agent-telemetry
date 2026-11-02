@@ -72,3 +72,20 @@ def test_renovate_manager_finds_the_runtime_version_pin():
     match = re.search(version_pattern, SCRIPT.read_text())
     assert match is not None
     assert match.group("currentValue") == validator.RENOVATE_VERSION
+
+
+@pytest.mark.skipif(os.name == "nt", reason="POSIX shell fixture")
+def test_client_check_uses_pinned_python_when_system_python_is_too_old(tmp_path):
+    import shutil
+
+    mise = shutil.which("mise")
+    assert mise is not None
+    fake_python = tmp_path / "python3"
+    fake_python.write_text("#!/bin/sh\nexit 19\n")
+    fake_python.chmod(0o755)
+    env = dict(os.environ, PATH=str(tmp_path) + os.pathsep + os.environ.get("PATH", ""))
+    result = subprocess.run(  # noqa: S603 -- fixed local task, no user input
+        [mise, "run", "client:check"], cwd=SCRIPT.parents[2], env=env, capture_output=True, text=True, timeout=60
+    )
+    assert result.returncode == 0, "client:check should use the configured Python runtime"
+    assert "Dry run only" in result.stdout

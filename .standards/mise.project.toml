@@ -25,11 +25,11 @@ run = ["docker compose ps", "curl -fsS http://127.0.0.1:13133/ || echo 'collecto
 
 [tasks."client:check"]
 description = "Dry run: show what would change in ~/.claude/settings.json and ~/.codex/config.toml"
-run = "python3 scripts/apply-client-config.py"
+run = "mise exec -- python scripts/apply-client-config.py"
 
 [tasks."client:apply"]
 description = "Write Desktop/CLI telemetry settings (with backups)"
-run = "python3 scripts/apply-client-config.py --apply"
+run = "mise exec -- python scripts/apply-client-config.py --apply"
 
 [tasks.report]
 description = "Per-session table straight from local transcripts (no Docker)"
