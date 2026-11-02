@@ -3,10 +3,14 @@ name = "session-indexer"
 version = "0.1.0"
 description = "Summarize Claude Code and Codex session transcripts into per-session Prometheus metrics"
 requires-python = ">=3.12"
-dependencies = ["prometheus-client>=0.21"]
+dependencies = ["prometheus-client>=0.21", "tzdata"]
 
 [project.scripts]
 session-indexer = "session_indexer.cli:main"
+agent-telemetry = "agent_telemetry.__main__:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/session_indexer", "src/agent_telemetry"]
 
 [dependency-groups]
 dev = ["pytest>=8", "ruff>=0.8"]

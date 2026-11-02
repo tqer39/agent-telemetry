@@ -280,3 +280,9 @@ Thumbs.db
 # never commit transcripts or telemetry dumps
 *.jsonl
 !session-indexer/tests/fixtures/*.jsonl
+# Local usage report snapshots contain private metadata.
+/report.html
+/report.json
+/analysis.txt
+/analysis.json
+/.claude/settings.local.json

@@ -39,6 +39,14 @@ run = "uv run --project session-indexer session-indexer report"
 description = "Tail what reaches the collector (set DEBUG_VERBOSITY=detailed in .env first)"
 run = "docker compose logs -f --since 5m otel-collector"
 
+[tasks."usage:report"]
+description = "Generate an offline HTML/JSON usage report"
+run = "uv run --locked --project session-indexer agent-telemetry"
+
+[tasks."usage:hook-config"]
+description = "Print optional advisory hook configuration"
+run = "uv run --locked --project session-indexer python -m agent_telemetry.hooks --config"
+
 [tasks."indexer:test"]
 description = "Unit tests + lint for session-indexer"
 dir = "session-indexer"
