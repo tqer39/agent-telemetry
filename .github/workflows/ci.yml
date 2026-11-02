@@ -23,6 +23,11 @@ jobs:
       - uses: jdx/mise-action@08ae2a091c038e1e05ec6f5115dc5c69d5a2a6b8 # v5
       - name: session-indexer tests and lint
         run: mise run test
+      - name: Built wheel provides both CLIs
+        run: |
+          uv build --project session-indexer --out-dir "$RUNNER_TEMP/usage-wheel"
+          uv run --isolated --no-project --with "$RUNNER_TEMP/usage-wheel/"*.whl agent-telemetry --help
+          uv run --isolated --no-project --with "$RUNNER_TEMP/usage-wheel/"*.whl session-indexer --help
       - name: compose file is valid
         run: GF_SECURITY_ADMIN_PASSWORD=ci docker compose config -q
       - name: collector config is valid
@@ -42,9 +47,24 @@ jobs:
       - name: yamllint / actionlint
         run: yamllint --no-warnings . && actionlint
 
+  usage-zstd:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: jdx/mise-action@08ae2a091c038e1e05ec6f5115dc5c69d5a2a6b8 # v5
+        with:
+          version: 2026.10.20
+      - name: Validate optional Zstandard support with Python 3.14
+        run: |
+          PYTHONPATH="$PWD/session-indexer/src" mise exec python@3.14.8 -- \
+            python -m unittest discover -s session-indexer/tests -p 'test_usage_*.py' -v
+
   # main の ruleset は `workflow-result` を必須チェックにしている（terraform-github の標準保護）
   workflow-result:
-    needs: [test]
+    needs: [test, usage-zstd]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -52,8 +72,9 @@ jobs:
       - name: Check workflow result
         env:
           TEST_RESULT: ${{ needs.test.result }}
+          ZSTD_RESULT: ${{ needs.usage-zstd.result }}
         run: |
-          if [ "$TEST_RESULT" != "success" ]; then
-            echo "test did not succeed: $TEST_RESULT"
+          if [ "$TEST_RESULT" != "success" ] || [ "$ZSTD_RESULT" != "success" ]; then
+            echo "test=$TEST_RESULT usage-zstd=$ZSTD_RESULT"
             exit 1
           fi

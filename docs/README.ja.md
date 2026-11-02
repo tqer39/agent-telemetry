@@ -73,6 +73,22 @@ OTLP 経路で届かないデータがあっても、**Agent Sessions** ダッ�
 uv run --project session-indexer session-indexer schema ~/.codex/sessions/2026/10/29/rollout-....jsonl
 ```
 
+## ローカルの利用量・改善候補レポート
+
+既存の `mise run report` に加え、外部サービスを使わずにHTML/JSONレポートと改善候補を生成できます。
+
+```bash
+mise run usage:report -- --timezone Asia/Tokyo
+uv run --locked --project session-indexer agent-telemetry --json --output report.json
+uv run --locked --project session-indexer agent-telemetry --analyze --from-report report.json
+```
+
+会話本文、ツール引数、結果本文は出力しません。セッションID・リポジトリ名・作業パス・日時は含むため、
+共有前に内容を確認してください。LLM・APIキーは不要です。固定Python 3.13では非圧縮・gzipを読み取り、
+Zstandardは `compression.zstd` が利用できる3.14以降で対応します。未対応のファイルは件数を表示して除外します。
+`mise run usage:hook-config` は任意の助言hookの設定を出力するだけで、自動登録しません。
+指標の定義、制約、既存hookを保持した設定方法は[詳細ガイド](local-usage.ja.md)を参照してください。
+
 ## 🚧 まだ含まれていないもの
 
 - **PR がマージされたか**：GitHub API と、どのセッションがどの PR を作ったかの紐づけが必要です。別のコレクターとして追加する予定です。

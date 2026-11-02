@@ -67,6 +67,24 @@ The transcript formats are undocumented. If numbers look wrong after an app upda
 uv run --project session-indexer session-indexer schema ~/.codex/sessions/2026/10/29/rollout-....jsonl
 ```
 
+## Offline usage reports
+
+An additional local CLI generates a self-contained HTML/JSON usage report and deterministic improvement candidates:
+
+```bash
+mise run usage:report -- --timezone Asia/Tokyo
+uv run --locked --project session-indexer agent-telemetry --json --output report.json
+uv run --locked --project session-indexer agent-telemetry --analyze --from-report report.json
+```
+
+Reports exclude transcript bodies, tool arguments and result text. They include private metadata such as
+session IDs, repository names, local paths and timestamps; review them before sharing.
+No LLM, API key or external service is used. `mise run report` remains the existing table report.
+Plaintext and gzip work on the pinned Python 3.13; Zstandard requires a Python build with
+`compression.zstd` (3.14+). Unsupported compressed files are counted and skipped.
+The optional `mise run usage:hook-config` prints advisory hook configuration without installing it.
+The [detailed guide](docs/local-usage.ja.md) covers metrics, limitations and preserving existing hooks.
+
 ## Not included (yet)
 
 - **PR merged or not**: needs the GitHub API and a session to PR link. Planned as a separate collector.
