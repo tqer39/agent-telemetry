@@ -83,7 +83,14 @@ def test_client_check_uses_pinned_python_when_system_python_is_too_old(tmp_path)
     fake_python = tmp_path / "python3"
     fake_python.write_text("#!/bin/sh\nexit 19\n")
     fake_python.chmod(0o755)
-    env = dict(os.environ, PATH=str(tmp_path) + os.pathsep + os.environ.get("PATH", ""))
+    test_home = tmp_path / "home"
+    test_home.mkdir()
+    env = dict(
+        os.environ,
+        HOME=str(test_home),
+        MISE_TASK_OUTPUT="interleave",
+        PATH=str(tmp_path) + os.pathsep + os.environ.get("PATH", ""),
+    )
     result = subprocess.run(  # noqa: S603 -- fixed local task, no user input
         [mise, "run", "client:check"], cwd=SCRIPT.parents[2], env=env, capture_output=True, text=True, timeout=60
     )
