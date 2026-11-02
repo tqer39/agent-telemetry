@@ -85,9 +85,12 @@ def test_client_check_uses_pinned_python_when_system_python_is_too_old(tmp_path)
     fake_python.chmod(0o755)
     test_home = tmp_path / "home"
     test_home.mkdir()
+    # Keep installed tools while isolating the personal Claude/Codex settings.
+    data_home = Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local/share"))
     env = dict(
         os.environ,
         HOME=str(test_home),
+        MISE_DATA_DIR=os.environ.get("MISE_DATA_DIR", str(data_home / "mise")),
         MISE_TASK_OUTPUT="interleave",
         PATH=str(tmp_path) + os.pathsep + os.environ.get("PATH", ""),
     )
