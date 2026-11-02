@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "bundleSha256": "e3152d202e02291d100ee6771084a3da63be9f9bf0bc3e0e67e778131e6a7ab4",
+  "bundleSha256": "c87131b42298ba32e0a9641ea8ea06872ea2263708167d21656c2facce970a37",
   "files": {
     ".codex/hooks.json": {
       "exists": true,
