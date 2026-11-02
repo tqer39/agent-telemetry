@@ -15,14 +15,14 @@
     {
       "id": 1,
       "type": "row",
-      "title": "Overview",
+      "title": "概要",
       "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
       "collapsed": false
     },
     {
       "id": 2,
       "type": "stat",
-      "title": "Total Events",
+      "title": "イベント数",
       "gridPos": { "h": 4, "w": 6, "x": 0, "y": 1 },
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
@@ -43,8 +43,8 @@
     {
       "id": 3,
       "type": "stat",
-      "title": "Token Usage",
-      "description": "Total tokens consumed across all turns",
+      "title": "トークン使用量",
+      "description": "全ターンで消費したトークンの合計です。",
       "gridPos": { "h": 4, "w": 6, "x": 6, "y": 1 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
@@ -66,7 +66,7 @@
     {
       "id": 4,
       "type": "stat",
-      "title": "Tool Calls",
+      "title": "ツール呼び出し数",
       "gridPos": { "h": 4, "w": 6, "x": 12, "y": 1 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
@@ -87,7 +87,7 @@
     {
       "id": 5,
       "type": "stat",
-      "title": "API Requests",
+      "title": "API リクエスト数",
       "gridPos": { "h": 4, "w": 6, "x": 18, "y": 1 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
@@ -108,15 +108,15 @@
     {
       "id": 6,
       "type": "row",
-      "title": "Performance",
+      "title": "処理時間",
       "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 },
       "collapsed": false
     },
     {
       "id": 7,
       "type": "timeseries",
-      "title": "Turn Duration (E2E)",
-      "description": "End-to-end turn duration percentiles",
+      "title": "応答全体の所要時間",
+      "description": "応答開始から完了までの所要時間の分布です。",
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
@@ -144,8 +144,8 @@
     {
       "id": 8,
       "type": "timeseries",
-      "title": "Time to First Token (TTFT)",
-      "description": "How quickly the first token arrives",
+      "title": "最初のトークンまでの時間",
+      "description": "最初のトークンが届くまでの時間です。",
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
@@ -169,8 +169,8 @@
     {
       "id": 9,
       "type": "timeseries",
-      "title": "Tool Call Duration",
-      "description": "Tool execution time percentiles",
+      "title": "ツールの実行時間",
+      "description": "ツール実行時間の分布です。",
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 14 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
@@ -194,8 +194,8 @@
     {
       "id": 10,
       "type": "timeseries",
-      "title": "API Request Duration",
-      "description": "API call latency percentiles",
+      "title": "API リクエストの所要時間",
+      "description": "API リクエストの所要時間の分布です。",
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 14 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
@@ -219,15 +219,15 @@
     {
       "id": 11,
       "type": "row",
-      "title": "Ecosystem",
+      "title": "スキル・プラグイン",
       "gridPos": { "h": 1, "w": 24, "x": 0, "y": 22 },
       "collapsed": false
     },
     {
       "id": 12,
       "type": "stat",
-      "title": "Skills Enabled",
-      "description": "Double _total suffix is expected: OTEL metric codex.thread.skills.enabled_total + Prometheus counter suffix",
+      "title": "有効なスキル",
+      "description": "指標名の末尾が二重の _total になるのは、元の名前と Prometheus の接尾辞によるものです。",
       "gridPos": { "h": 4, "w": 8, "x": 0, "y": 23 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
@@ -245,7 +245,7 @@
     {
       "id": 13,
       "type": "stat",
-      "title": "Hooks Executed",
+      "title": "実行したフック",
       "gridPos": { "h": 4, "w": 8, "x": 8, "y": 23 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
@@ -263,7 +263,7 @@
     {
       "id": 14,
       "type": "stat",
-      "title": "Plugin Syncs",
+      "title": "プラグインの同期",
       "gridPos": { "h": 4, "w": 8, "x": 16, "y": 23 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
@@ -281,14 +281,14 @@
     {
       "id": 15,
       "type": "row",
-      "title": "Traces",
+      "title": "トレース",
       "gridPos": { "h": 1, "w": 24, "x": 0, "y": 27 },
       "collapsed": false
     },
     {
       "id": 16,
       "type": "traces",
-      "title": "Trace Explorer",
+      "title": "トレースの検索",
       "gridPos": { "h": 8, "w": 24, "x": 0, "y": 28 },
       "datasource": { "type": "tempo", "uid": "tempo" },
       "targets": [
@@ -303,14 +303,14 @@
     {
       "id": 17,
       "type": "row",
-      "title": "Logs",
+      "title": "ログ",
       "gridPos": { "h": 1, "w": 24, "x": 0, "y": 36 },
       "collapsed": false
     },
     {
       "id": 18,
       "type": "logs",
-      "title": "Event Logs",
+      "title": "イベントログ",
       "gridPos": { "h": 10, "w": 24, "x": 0, "y": 37 },
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [

@@ -1,6 +1,6 @@
 {
   "uid": "tool-comparison",
-  "title": "Tool Comparison",
+  "title": "ツールの比較",
   "description": "Compare cost, performance, and usage across Claude Code, Codex CLI, and Gemini CLI",
   "tags": ["llm-telemetry", "comparison"],
   "timezone": "browser",
@@ -15,15 +15,15 @@
     {
       "id": 1,
       "type": "row",
-      "title": "Event Activity",
+      "title": "イベントの発生状況",
       "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
       "collapsed": false
     },
     {
       "id": 2,
       "type": "timeseries",
-      "title": "Event Activity by Tool",
-      "description": "Log event rate across all tools (Loki-based)",
+      "title": "ツール別のイベント発生状況",
+      "description": "Loki に記録されたツール別のイベント発生率です。",
       "gridPos": { "h": 8, "w": 24, "x": 0, "y": 1 },
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
@@ -45,15 +45,15 @@
     {
       "id": 3,
       "type": "row",
-      "title": "Token Usage",
+      "title": "トークン使用量",
       "gridPos": { "h": 1, "w": 24, "x": 0, "y": 9 },
       "collapsed": false
     },
     {
       "id": 4,
       "type": "barchart",
-      "title": "Total Tokens by Tool",
-      "description": "Token breakdown: Claude Code (input/output/cache) vs Gemini (input/output) vs Codex (turn tokens)",
+      "title": "ツール別トークン数",
+      "description": "Claude Code・Gemini・Codex のトークン内訳です。ツールによって集計方法が異なります。",
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 10 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
@@ -93,8 +93,8 @@
     {
       "id": 5,
       "type": "barchart",
-      "title": "Input vs Output Tokens",
-      "description": "Input/output breakdown across tools",
+      "title": "入力・出力トークン数",
+      "description": "ツール別の入力・出力トークン内訳です。",
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 10 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
@@ -141,15 +141,15 @@
     {
       "id": 6,
       "type": "row",
-      "title": "Efficiency & Cost",
+      "title": "効率とコスト",
       "gridPos": { "h": 1, "w": 24, "x": 0, "y": 18 },
       "collapsed": false
     },
     {
       "id": 7,
       "type": "stat",
-      "title": "I/O Ratio (Claude Code)",
-      "description": "Input-to-output token ratio. Lower = more efficient output generation.",
+      "title": "入力・出力比（Claude Code）",
+      "description": "入力トークンと出力トークンの比です。作業内容によって変わります。",
       "gridPos": { "h": 4, "w": 6, "x": 0, "y": 19 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
@@ -171,8 +171,8 @@
     {
       "id": 8,
       "type": "stat",
-      "title": "I/O Ratio (Gemini)",
-      "description": "Input-to-output token ratio for Gemini CLI",
+      "title": "入力・出力比（Gemini）",
+      "description": "Gemini CLI の入力トークンと出力トークンの比です。",
       "gridPos": { "h": 4, "w": 6, "x": 6, "y": 19 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
@@ -194,7 +194,7 @@
     {
       "id": 9,
       "type": "stat",
-      "title": "Total Cost (Claude Code)",
+      "title": "合計コスト（Claude Code）",
       "gridPos": { "h": 4, "w": 6, "x": 12, "y": 19 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
@@ -216,8 +216,8 @@
     {
       "id": 10,
       "type": "stat",
-      "title": "Cache Hit Rate (Claude Code)",
-      "description": "Higher = better cost efficiency",
+      "title": "キャッシュヒット率（Claude Code）",
+      "description": "入力側トークンに占めるキャッシュの割合です。",
       "gridPos": { "h": 4, "w": 6, "x": 18, "y": 19 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
@@ -239,8 +239,8 @@
     {
       "id": 11,
       "type": "timeseries",
-      "title": "Cost Over Time (Claude Code)",
-      "description": "Cost rate trend – only Claude Code emits cost metrics",
+      "title": "コストの推移（Claude Code）",
+      "description": "Claude Code のコストの推移です。",
       "gridPos": { "h": 8, "w": 24, "x": 0, "y": 23 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
