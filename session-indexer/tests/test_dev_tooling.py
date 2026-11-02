@@ -75,7 +75,8 @@ def test_renovate_manager_finds_the_runtime_version_pin():
 
 
 @pytest.mark.skipif(os.name == "nt", reason="POSIX shell fixture")
-def test_client_check_uses_pinned_python_when_system_python_is_too_old(tmp_path):
+@pytest.mark.parametrize("xdg_data_home", [None, "", "relative-data"])
+def test_client_check_uses_pinned_python_when_system_python_is_too_old(tmp_path, monkeypatch, xdg_data_home):
     import shutil
 
     mise = shutil.which("mise")
@@ -85,8 +86,11 @@ def test_client_check_uses_pinned_python_when_system_python_is_too_old(tmp_path)
     fake_python.chmod(0o755)
     test_home = tmp_path / "home"
     test_home.mkdir()
+    if xdg_data_home is not None:
+        monkeypatch.setenv("XDG_DATA_HOME", xdg_data_home)
     # Keep installed tools while isolating the personal Claude/Codex settings.
-    data_home = Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local/share"))
+    xdg_data_home = os.environ.get("XDG_DATA_HOME")
+    data_home = Path(xdg_data_home) if xdg_data_home and Path(xdg_data_home).is_absolute() else Path.home() / ".local/share"
     env = dict(
         os.environ,
         HOME=str(test_home),
