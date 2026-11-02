@@ -7,7 +7,7 @@
 - 会話記録（JSONL）の中身をリポジトリ・ログ・Loki に入れない。集計値のみ扱う。
 - ポートは 127.0.0.1 バインドを維持する。
 
-# 共通開発ルール
+## 共通開発ルール
 
 作業開始時に `.standards/rules.md` を読み、`mise run standards:prepare` を実行する。
 作業終了前に `mise run standards:finish` を実行する。
