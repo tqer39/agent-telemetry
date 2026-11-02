@@ -151,7 +151,8 @@ class Trace:
                 elif b.get("type") == "tool_result":
                     result(b.get("tool_use_id"), b.get("content"), b.get("is_error"))
             if kind == "system" and row.get("subtype") == "compact_boundary":
-                self.events[row.get("uuid") or digest(base)] = dict(base, kind="compaction")
+                uuid = row.get("uuid")
+                self.events[uuid if isinstance(uuid, str) and uuid else digest(base)] = dict(base, kind="compaction")
         elif kind == "response_item":
             ty = p.get("type")
             if ty in ("function_call", "custom_tool_call"):

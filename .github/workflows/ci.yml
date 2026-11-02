@@ -59,7 +59,7 @@ jobs:
           version: 2026.10.20
       - name: Validate optional Zstandard support with Python 3.14
         run: |
-          PYTHONPATH="$PWD/session-indexer/src" mise exec python@3.14.8 -- \
+          mise exec python@3.14.8 -- uv run --isolated --python 3.14.8 --locked --project session-indexer \
             python -m unittest discover -s session-indexer/tests -p 'test_usage_*.py' -v
 
   # main の ruleset は `workflow-result` を必須チェックにしている（terraform-github の標準保護）

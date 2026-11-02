@@ -59,12 +59,21 @@ def read_session(path, provider, diagnostics, in_range):
     """Stage metadata until the entire compressed stream has been validated."""
     identity = str(logical_path(path))
     sid = identity
-    model = "unknown"
-    last_activity = None
-    modern = []
-    legacy = []
-    high = dict.fromkeys(FIELDS, 0)
-    trace = Trace(path, provider, in_range)
+    states = {}
+
+    def state_for(session_id):
+        return states.setdefault(
+            session_id,
+            {
+                "model": "unknown",
+                "last_activity": None,
+                "modern": [],
+                "legacy": [],
+                "high": dict.fromkeys(FIELDS, 0),
+                "trace": Trace(path, provider, in_range),
+            },
+        )
+
     with open_log(path) as stream:
         for index, line in enumerate(stream):
             try:
@@ -76,16 +85,20 @@ def read_session(path, provider, diagnostics, in_range):
                 diagnostics["invalid_lines"] += 1
                 continue
             dt = stamp(row.get("timestamp"))
-            trace.observe(row, dt, index + 1)
-            if dt and in_range(dt) and (last_activity is None or dt > last_activity):
-                last_activity = dt
             kind = row.get("type")
             p = mapping(row.get("payload"))
             if provider == "claude":
-                m = mapping(row.get("message"))
                 sid = label(row.get("sessionId"), sid)
+            elif kind == "session_meta":
+                sid = label(p.get("id"), label(p.get("session_id"), sid))
+            state = state_for(sid)
+            state["trace"].observe(row, dt, index + 1)
+            if dt and in_range(dt) and (state["last_activity"] is None or dt > state["last_activity"]):
+                state["last_activity"] = dt
+            if provider == "claude":
+                m = mapping(row.get("message"))
                 if kind == "assistant" and isinstance(m.get("usage"), dict):
-                    key = (provider, label(m.get("id"), label(row.get("uuid"), f"{identity}:{index}")))
+                    key = (provider, sid, label(m.get("id"), label(row.get("uuid"), f"{identity}:{index}")))
                     counts = tokens(m["usage"], provider)
                     evidence = {
                         "source": str(path),
@@ -93,11 +106,9 @@ def read_session(path, provider, diagnostics, in_range):
                         "format": "claude_response",
                         "cache_known": cache_known(m["usage"], provider, counts),
                     }
-                    modern.append((key, provider, sid, dt, label(m.get("model"), "unknown"), counts, evidence))
-            elif kind == "session_meta":
-                sid = label(p.get("id"), label(p.get("session_id"), sid))
+                    state["modern"].append((key, provider, sid, dt, label(m.get("model"), "unknown"), counts, evidence))
             elif kind == "turn_context":
-                model = label(p.get("model"), "unknown")
+                state["model"] = label(p.get("model"), "unknown")
             elif kind == "token_usage_record" and isinstance(p.get("usage"), dict):
                 key = (provider, sid, label(p.get("response_id"), f"{identity}:{index}"))
                 counts = tokens(p["usage"], provider)
@@ -107,13 +118,14 @@ def read_session(path, provider, diagnostics, in_range):
                     "format": "codex_response",
                     "cache_known": cache_known(p["usage"], provider, counts),
                 }
-                modern.append((key, provider, sid, dt, model, counts, evidence))
+                state["modern"].append((key, provider, sid, dt, state["model"], counts, evidence))
             elif kind == "event_msg" and p.get("type") == "token_count":
                 total = mapping(p.get("info")).get("total_token_usage")
                 if isinstance(total, dict):
                     current = tokens(total, provider)
+                    high = state["high"]
                     delta = {k: max(0, current[k] - high[k]) for k in FIELDS}
-                    high = {k: max(high[k], current[k]) for k in FIELDS}
+                    high = state["high"] = {k: max(high[k], current[k]) for k in FIELDS}
                     if delta["input"] or delta["output"]:
                         key = (provider, sid, "cumulative", tuple(high.values()))
                         evidence = {
@@ -122,8 +134,11 @@ def read_session(path, provider, diagnostics, in_range):
                             "format": "codex_cumulative_delta",
                             "cache_known": cache_known(total, provider, delta),
                         }
-                        legacy.append((key, provider, sid, dt, model, delta, evidence))
-    return sid, last_activity, modern or legacy, trace.export()
+                        state["legacy"].append((key, provider, sid, dt, state["model"], delta, evidence))
+    return [
+        (session_id, state["last_activity"], state["modern"] or state["legacy"], state["trace"].export())
+        for session_id, state in states.items()
+    ]
 
 
 def scan(claude_root, codex_root, days=30, tz=None, now=None):
@@ -167,36 +182,37 @@ def scan(claude_root, codex_root, days=30, tz=None, now=None):
                 found += 1
                 for index, path in enumerate(alternatives):
                     try:
-                        sid, last_activity, records, trace = read_session(path, provider, diagnostics, in_range)
+                        activity = read_session(path, provider, diagnostics, in_range)
                     except ZstdUnavailableError:
                         diagnostics["zstd_unavailable_files"] += 1
                         continue
                     except READ_ERRORS:
                         diagnostics["corrupt_compressed_files" if path.suffix != ".jsonl" else "unreadable_files"] += 1
                         continue
-                    for record in records:
-                        keep_request(*record)
-                    if last_activity:
-                        key = (provider, sid)
-                        sessions[key] = max(sessions.get(key, last_activity), last_activity)
-                        existing = traces.setdefault(
-                            key,
-                            {
-                                "cwd": trace["cwd"],
-                                "recorded_remote": trace["recorded_remote"],
-                                "calls": {},
-                                "results": {},
-                                "events": {},
-                                "sources": [],
-                            },
-                        )
-                        if existing["cwd"] is None:
-                            existing["cwd"] = trace["cwd"]
-                        if existing["recorded_remote"] is None:
-                            existing["recorded_remote"] = trace["recorded_remote"]
-                        for field in ("calls", "results", "events"):
-                            existing[field].update(trace[field])
-                        existing["sources"].append(str(path))
+                    for sid, last_activity, records, trace in activity:
+                        for record in records:
+                            keep_request(*record)
+                        if last_activity:
+                            key = (provider, sid)
+                            sessions[key] = max(sessions.get(key, last_activity), last_activity)
+                            existing = traces.setdefault(
+                                key,
+                                {
+                                    "cwd": trace["cwd"],
+                                    "recorded_remote": trace["recorded_remote"],
+                                    "calls": {},
+                                    "results": {},
+                                    "events": {},
+                                    "sources": [],
+                                },
+                            )
+                            if existing["cwd"] is None:
+                                existing["cwd"] = trace["cwd"]
+                            if existing["recorded_remote"] is None:
+                                existing["recorded_remote"] = trace["recorded_remote"]
+                            for field in ("calls", "results", "events"):
+                                existing[field].update(trace[field])
+                            existing["sources"].append(str(path))
                     read += 1
                     compressed += path.suffix != ".jsonl"
                     skipped = len(alternatives) - index - 1

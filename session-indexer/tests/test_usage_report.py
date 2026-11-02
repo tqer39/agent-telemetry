@@ -59,6 +59,64 @@ class UsageTests(unittest.TestCase):
             },
         }
 
+    def test_timezone_without_system_database(self):
+        import zoneinfo
+
+        original = zoneinfo.TZPATH
+        try:
+            zoneinfo.reset_tzpath([])
+            zone = ZoneInfo.no_cache("Asia/Tokyo")
+            self.assertEqual(self.now.astimezone(zone).hour, 17)
+        finally:
+            zoneinfo.reset_tzpath(original)
+
+    def test_multiple_claude_sessions_partition_activity_and_trace(self):
+        rows = []
+        for sid, amount, calls in (("first", 10, 1), ("second", 20, 2)):
+            row = self.claude_row(amount)
+            row["sessionId"] = sid
+            row["cwd"] = f"/missing/{sid}"
+            row["message"]["content"] = [{"type": "tool_use", "id": str(i), "name": "read", "input": {}} for i in range(calls)]
+            rows.append(row)
+        rows.append({"type": "user", "sessionId": "empty", "timestamp": rows[0]["timestamp"]})
+        self.write(self.claude / "mixed.jsonl", rows)
+        report = self.report()
+        sessions = {s["session_id"]: s for s in report["sessions"]}
+        self.assertEqual(set(sessions), {"first", "second", "empty"})
+        self.assertEqual([sessions[s]["tool_calls"] for s in ("first", "second", "empty")], [1, 2, 0])
+        self.assertEqual([sessions[s]["output"] for s in ("first", "second", "empty")], [10, 20, 0])
+        self.assertEqual(report["providers"]["claude"]["sessions_without_usage"], 1)
+        self.assertEqual(sum(s["input"] for s in sessions.values()), report["providers"]["claude"]["input"])
+        self.assertEqual(sessions["first"]["cwd"], "/missing/first")
+
+    def test_codex_sessions_have_independent_counters_and_format_selection(self):
+        rows = []
+        for sid, amount in (("first", 100), ("second", 50)):
+            rows.extend([{"type": "session_meta", "payload": {"id": sid}}, self.legacy(amount)])
+        rows.append(
+            {
+                "type": "token_usage_record",
+                "timestamp": "2026-10-31T00:00:00Z",
+                "payload": {"response_id": "r1", "usage": {"input_tokens": 70}},
+            }
+        )
+        self.write(self.codex / "sessions/mixed.jsonl", rows)
+        report = self.report()
+        sessions = {s["session_id"]: s for s in report["sessions"]}
+        self.assertEqual({sid: s["input"] for sid, s in sessions.items()}, {"first": 100, "second": 70})
+        self.assertEqual(report["providers"]["codex"]["input"], 170)
+
+    def test_malformed_compaction_uuid_does_not_abort_scan(self):
+        rows = [self.claude_row()]
+        for uuid in ([], {"private": "SECRET"}):
+            rows.append(
+                {"type": "system", "subtype": "compact_boundary", "uuid": uuid, "sessionId": "s1", "timestamp": rows[0]["timestamp"]}
+            )
+        self.write(self.claude / "malformed.jsonl", rows)
+        report = self.report()
+        self.assertEqual(report["sessions"][0]["compactions"], 2)
+        self.assertNotIn("SECRET", json.dumps(report))
+
     def test_claude_streaming_and_copied_logs_count_once(self):
         rows = [self.claude_row(), self.claude_row(30)]
         self.write(self.claude / "p/s.jsonl", rows)

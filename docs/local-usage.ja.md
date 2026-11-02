@@ -1,7 +1,7 @@
 # ローカル利用量レポート
 
 Claude CodeとCodexのローカルセッションログから、トークン効率の改善候補を確認するツールです。
-レポート処理はPythonの標準ライブラリを使い、LLMやAPIキーは不要です。
+レポート処理はPythonの標準ライブラリとタイムゾーンデータを使い、LLMやAPIキーは不要です。
 Zstandard圧縮ログを含む集計には、`compression.zstd` が使えるPython 3.14以降を使用してください。
 通常はmiseで固定したPython 3.13.18を使います（パッケージの最低要件は3.12）。
 3.13ではZstandardを未読取として件数を示し、非圧縮・gzipログの集計を継続します。
@@ -22,7 +22,7 @@ uv run --locked --project session-indexer agent-telemetry --timezone Asia/Tokyo 
 ```bash
 # 当日分 / 圧縮済みの過去ログも含む全期間（当日まで）
 uv run --locked --project session-indexer agent-telemetry --days 1 --timezone Asia/Tokyo
-uv run --locked --project session-indexer agent-telemetry --days 0 --timezone Asia/Tokyo --open
+uv run --isolated --python 3.14 --locked --project session-indexer agent-telemetry --days 0 --timezone Asia/Tokyo --open
 
 # 集計結果をJSONとして取得
 uv run --locked --project session-indexer agent-telemetry --json
@@ -66,14 +66,14 @@ Claude CodeとCodex向けのcommand hookを用意しています。LLM・API・�
 mise run usage:hook-config
 ```
 
-生成JSONの `hooks` を、Claude Codeでは `.claude/settings.local.json`、
-Codexでは `.standards/hooks.local.json` の既存設定へマージしてください。他のhookを置き換えないでください。
-Codexの生成物 `.codex/hooks.json` は直接編集せず、`standards:plan` と `apply` で再生成します。
-この変更はhookを自動登録しません。生成したcommandには機器固有の絶対パスが含まれるため、共有前に確認してください。
+生成JSONの `hooks` を、Claude Codeの未追跡設定 `.claude/settings.local.json` の既存設定へマージしてください。
+他のhookを置き換えないでください。この変更はhookを自動登録しません。
+生成したcommandには機器固有の絶対パスが含まれるため、追跡対象の設定へ保存しないでください。
 別のclone・worktreeで使う場合やPython・スクリプトの配置を変えた場合は、設定を生成し直します。
 ユーザー全体の設定ファイルは変更していません。
 
-Codexでは `/hooks` で定義を確認・信頼してから有効になります。
+Codex用のイベント処理は実装済みですが、既存の管理対象hookを保持する機器固有設定の登録方法は未整備です。
+Codexへの登録は現時点では案内しません。`.standards/hooks.local.json` や `.codex/hooks.json` へ絶対パスを保存しないでください。
 設定再読込のため、必要に応じてクライアントを再起動してください。
 クライアントのバージョンや実行環境でのイベント発火・画面表示は、実際に確認する必要があります。
 
