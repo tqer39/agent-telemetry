@@ -5,7 +5,7 @@ Local observability for **Claude Code / Claude Desktop** and **Codex CLI / Codex
 Two independent data paths, so a gap in one is covered by the other:
 
 | Path | Source | What you get | Works for Desktop apps |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | OTLP | the apps' built-in OpenTelemetry export | cost, token, API latency, tool events, traces | Yes, via `~/.claude/settings.json` and `~/.codex/config.toml` (Desktop apps never read `~/.zshrc`) |
 | Transcripts | `~/.claude/projects/**/*.jsonl`, `~/.codex/sessions/**/*.jsonl` | per-session duration, tokens, cache hit ratio, tool calls / failures, repeated commands, retries after failure | Yes, both apps write these files |
 
@@ -45,7 +45,7 @@ Anything missing on the OTLP path is still covered by the **Agent Sessions** das
 ## Dashboards
 
 | Dashboard | Source |
-|---|---|
+| --- | --- |
 | Agent Sessions (Claude + Codex) | session-indexer (new) |
 | Claude Code / Codex CLI / Comparison / Overview | OTLP (from llm-cli-telemetry) |
 
@@ -93,6 +93,16 @@ followed by `mise run standards:finish` before finishing. `mise run check` runs 
 configuration checks, existing Lefthook checks, Ruff, pytest, and package build.
 The previous combined test task is available as `mise run indexer:test`.
 
+Check the applied dev-standards version with:
+
+```bash
+mise run standards:version
+```
+
+This reads `.standards/lock.json`, independently of the launcher CLI version.
+`standards:prepare` also prints the applied version and bundle hash after checking configuration.
+`dev-standards version` reports the CLI executable's own version.
+
 Edit project settings in `.standards/mise.project.toml`,
 `.standards/tasks.project.toml`, and the other `.standards/*.local` sources.
 Save and review a plan with
@@ -102,15 +112,13 @@ then apply it with `./.standards/cache/dev-standards apply --plan .standards/pla
 Existing Compose operations and client settings tasks keep their names.
 The original CI workflow remains alongside the generated Dev Standards workflow.
 
-The local maintenance fleet is registered; scheduled maintenance is not configured
-by this onboarding. The Python profile changes in dev-standards and this adoption
-must be committed and integrated before updates can be distributed from GitHub.
+The configured local maintenance host distributes updates through verified, automatically merged PRs.
+A fresh clone does not create or enable a maintenance schedule.
 
 The Renovate hook invokes mise's pinned Node/npx directly, so a different system
 Node cannot load native RE2 modules from the wrong ABI. RE2 fallback is a failed
 check. Its pinned Renovate version remains tracked by the custom manager in
 `renovate.json5`.
 
-On a new checkout, build/install the matching dev-standards CLI from its Python/uv
-support change, then run `dev-standards sync` to populate the ignored CLI cache
-before using the standards tasks. Source changes must be integrated first.
+On a new checkout, build/install the dev-standards version recorded in `.standards/lock.json`,
+then run `dev-standards sync` to populate the ignored CLI cache before using the standards tasks.
