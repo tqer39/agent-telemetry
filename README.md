@@ -5,7 +5,7 @@ Local observability for **Claude Code / Claude Desktop** and **Codex CLI / Codex
 Two independent data paths, so a gap in one is covered by the other:
 
 | Path | Source | What you get | Works for Desktop apps |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | OTLP | the apps' built-in OpenTelemetry export | cost, token, API latency, tool events, traces | Yes, via `~/.claude/settings.json` and `~/.codex/config.toml` (Desktop apps never read `~/.zshrc`) |
 | Transcripts | `~/.claude/projects/**/*.jsonl`, `~/.codex/sessions/**/*.jsonl` | per-session duration, tokens, cache hit ratio, tool calls / failures, repeated commands, retries after failure | Yes, both apps write these files |
 
@@ -45,7 +45,7 @@ Anything missing on the OTLP path is still covered by the **Agent Sessions** das
 ## Dashboards
 
 | Dashboard | Source |
-|---|---|
+| --- | --- |
 | Agent Sessions (Claude + Codex) | session-indexer (new) |
 | Claude Code / Codex CLI / Comparison / Overview | OTLP (from llm-cli-telemetry) |
 

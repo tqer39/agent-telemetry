@@ -5,7 +5,7 @@
 データの取り込み経路を2本用意しているので、片方に欠けがあってももう片方で補えます。
 
 | 経路 | 取得元 | 得られるもの | Desktop アプリ |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | OTLP | 各アプリに組み込みの OpenTelemetry 出力 | コスト、トークン、API レイテンシ、ツールのイベント、トレース | 対応。`~/.claude/settings.json` と `~/.codex/config.toml` で設定する（Desktop アプリは `~/.zshrc` を読まないため） |
 | 会話記録（Transcript） | `~/.claude/projects/**/*.jsonl` と `~/.codex/sessions/**/*.jsonl` | セッションごとの所要時間、トークン数、キャッシュ率、ツール呼び出し数と失敗数、同じコマンドの反復回数、失敗後の再実行回数 | 対応。どちらのアプリもこのファイルを書き出す |
 
@@ -53,7 +53,7 @@ OTLP 経路で届かないデータがあっても、**Agent Sessions** ダッ�
 ## 📈 ダッシュボード
 
 | ダッシュボード | 取得元 |
-|---|---|
+| --- | --- |
 | Agent Sessions（Claude + Codex） | session-indexer（今回新規に作成） |
 | Claude Code / Codex CLI / Comparison / Overview | OTLP（llm-cli-telemetry から流用） |
 
