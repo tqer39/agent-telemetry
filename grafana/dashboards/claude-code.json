@@ -1,7 +1,7 @@
 {
   "uid": "claude-code",
   "title": "Claude Code",
-  "description": "Claude Code telemetry – cost efficiency, productivity, and token usage",
+  "description": "Claude Code のコスト、作業実績、トークン使用量を表示します。",
   "tags": ["llm-telemetry", "claude-code"],
   "timezone": "browser",
   "schemaVersion": 39,

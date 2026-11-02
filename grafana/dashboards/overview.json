@@ -1,7 +1,7 @@
 {
   "uid": "llm-overview",
   "title": "テレメトリーの概要",
-  "description": "Cost, productivity, and usage across all LLM CLI tools",
+  "description": "LLM CLI ツールのコスト、作業実績、使用量を表示します。",
   "tags": ["llm-telemetry"],
   "timezone": "browser",
   "schemaVersion": 39,
@@ -132,7 +132,7 @@
       "id": 7,
       "type": "timeseries",
       "title": "コストの推移（Claude Code）",
-      "description": "モデル別のコストの推移です。",
+      "description": "モデル別の毎秒あたりの平均コスト増加額（米ドル／秒）の推移です。直近5分間の平均で、総費用ではありません。",
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [

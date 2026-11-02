@@ -1,7 +1,7 @@
 {
   "uid": "tool-comparison",
   "title": "ツールの比較",
-  "description": "Compare cost, performance, and usage across Claude Code, Codex CLI, and Gemini CLI",
+  "description": "Claude Code・Codex CLI・Gemini CLI のコスト、処理時間、使用量を比較します。",
   "tags": ["llm-telemetry", "comparison"],
   "timezone": "browser",
   "schemaVersion": 39,
@@ -217,7 +217,7 @@
       "id": 10,
       "type": "stat",
       "title": "キャッシュヒット率（Claude Code）",
-      "description": "入力側トークンに占めるキャッシュの割合です。",
+      "description": "入力とキャッシュ読み取りの合計に対する、キャッシュ読み取りの割合です。キャッシュ書き込みは分母に含みません。",
       "gridPos": { "h": 4, "w": 6, "x": 18, "y": 19 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
@@ -240,7 +240,7 @@
       "id": 11,
       "type": "timeseries",
       "title": "コストの推移（Claude Code）",
-      "description": "Claude Code のコストの推移です。",
+      "description": "Claude Code の毎秒あたりの平均コスト増加額（米ドル／秒）の推移です。直近5分間の平均で、総費用ではありません。",
       "gridPos": { "h": 8, "w": 24, "x": 0, "y": 23 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
