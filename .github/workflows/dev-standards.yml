@@ -29,6 +29,8 @@ jobs:
               assert not target.is_symlink(), name
               assert expected['exists'] and target.read_bytes() == expected['content'].encode(), name
           PYTHON
+      - name: Check canonical sources with pinned CLI
+        run: mise exec go@1.27.3 -- go run github.com/tqer39/dev-standards/cmd/dev-standards@v0.4.2 check --repo .
       - run: mise run lint
       - run: mise run format:check
       - run: mise run test

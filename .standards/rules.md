@@ -15,6 +15,8 @@ EditorConfig、gitignore.io の採用入力、mise の作業入口を維持す�
 
 計画を確認して適用し、check と verify で確認する。
 
+CI でも採用版の CLI で正本から再生成して照合する。保存済みスナップショット同士の一致だけで適合としない。
+
 ## CORE-EDITORCONFIG
 
 ### EditorConfig の導入
