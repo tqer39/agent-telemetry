@@ -20,6 +20,10 @@ CI でも採用版の CLI で正本から再生成して照合する。保存済
 保守用の新規 checkout でも、宣言した bootstrap で依存を準備してから検証する。
 ルール生成を使う利用先では、既存の生成タスクを実行して正本と生成物を照合する。
 
+自動更新でも既存のコミットフックを維持する。利用先の件名形式が必要な場合は、
+`.standards/mise.project.toml` の `vars.standards_commit_message` に1行の件名を宣言する。
+宣言した件名を自動コミットと更新 PR の題名に使い、フックを無効化して形式を回避しない。
+
 ## CORE-EDITORCONFIG
 
 ### EditorConfig の導入
