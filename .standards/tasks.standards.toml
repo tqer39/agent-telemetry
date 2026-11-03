@@ -44,3 +44,7 @@ run_windows = '.\.standards\cache\dev-standards.exe prepare'
 ["standards:finish"]
 run = "./.standards/cache/dev-standards finish"
 run_windows = '.\.standards\cache\dev-standards.exe finish'
+
+["standards:feedback"]
+run = "./.standards/cache/dev-standards feedback"
+run_windows = '.\.standards\cache\dev-standards.exe feedback'
