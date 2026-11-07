@@ -46,6 +46,6 @@ def load_runs(directory: Path) -> list[Run]:
                 repairs=int(data.get("repairs", 0)),
                 first_round_passed=first_round_passed,
             )
-        except (OSError, ValueError, KeyError, TypeError):
+        except (OSError, ValueError, KeyError, TypeError, OverflowError):
             continue
     return list(runs.values())

@@ -113,3 +113,9 @@ def test_load_runs_skips_non_object_and_invalid_run_id(tmp_path: Path) -> None:
     (tmp_path / "e.json").write_text(json.dumps({"run_id": 1}), encoding="utf-8")
     (tmp_path / "f.json").write_text(json.dumps({"run_id": "ok"}), encoding="utf-8")
     assert [run.run_id for run in load_runs(tmp_path)] == ["ok"]
+
+
+def test_load_runs_skips_out_of_range_number(tmp_path: Path) -> None:
+    (tmp_path / "a.json").write_text('{"run_id": "bad", "repairs": 1e999}', encoding="utf-8")
+    (tmp_path / "b.json").write_text('{"run_id": "ok", "repairs": 1}', encoding="utf-8")
+    assert [run.run_id for run in load_runs(tmp_path)] == ["ok"]
