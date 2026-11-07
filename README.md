@@ -23,6 +23,7 @@ Transcripts are **summarized, never shipped**: source code, prompts and secrets 
 ```bash
 mise run setup
 cp .env.example .env            # set GF_SECURITY_ADMIN_PASSWORD
+mkdir -p ~/.local/state/agent-harness/runs   # otherwise Docker creates it as root
 mise run up                     # docker compose up -d --build
 mise run client:check           # dry run of the Desktop/CLI settings change
 mise run client:apply           # write them (backups are created)

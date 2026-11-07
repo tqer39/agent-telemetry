@@ -13,8 +13,7 @@ run = ["mise install", "uv sync --project session-indexer", "lefthook install"]
 
 [tasks.up]
 description = "Start the stack (requires .env)"
-# Docker に作らせると root 所有になり、agent-harness が実行記録を書けなくなる。
-run = ["mkdir -p \"$HOME/.local/state/agent-harness/runs\"", "docker compose up -d --build"]
+run = "docker compose up -d --build"
 
 [tasks.down]
 description = "Stop the stack (keeps data volumes)"

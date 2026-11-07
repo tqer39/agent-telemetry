@@ -31,6 +31,7 @@ flowchart LR
 ```bash
 mise run setup
 cp .env.example .env            # GF_SECURITY_ADMIN_PASSWORD を設定する
+mkdir -p ~/.local/state/agent-harness/runs   # 無いと Docker が root 所有で作成する
 mise run up                     # docker compose up -d --build
 mise run client:check           # Desktop と CLI の設定変更内容を確認（ドライラン、ファイルは変更しない）
 mise run client:apply           # 設定を書き込む（バックアップを自動で作成）
