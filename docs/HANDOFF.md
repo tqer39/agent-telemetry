@@ -32,8 +32,8 @@ Claude（Desktop / Code）と Codex（Desktop / CLI）による自律開発が�
 ## 次にやること（優先順）
 1. ~~`mise run report` と `session-indexer schema <実ファイル>` で実データとのズレを確認し、パーサーを修正~~（2026-10-29 済）
 2. `mise run up` → `DEBUG_VERBOSITY=detailed` で Desktop 2 種から何が届くか記録し README に追記。
-3. PR マージ状況コレクター（GitHub API, read-only fine-grained token）。
-4. Claude → Codex の `run_id` 伝播（Claude 側 skill と Codex 側 AGENTS.md）。
+3. ~~PR マージ状況コレクター~~ → `agent-harness` の実行記録から取り込むので、GitHub のトークンは不要になった。
+4. ~~Claude → Codex の `run_id` 伝播~~ → `agent-harness` の作業ディレクトリ名から取得する。
 
 ## 注意
 - フックは pre-commit ではなく **lefthook**（terraform-github が lefthook 移行済みで renovate.json5 も前提にしているため）。ユーザーの開発ルール記載とは異なるので、確認が取れるまで変更しないこと。
