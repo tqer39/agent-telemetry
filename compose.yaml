@@ -10,7 +10,7 @@ name: agent-telemetry
 
 services:
   otel-collector:
-    image: otel/opentelemetry-collector-contrib:0.120.0
+    image: otel/opentelemetry-collector-contrib:0.163.2
     command: ["--config=/etc/otelcol-contrib/config.yaml"]
     ports:
       - "127.0.0.1:4317:4317" # OTLP gRPC
