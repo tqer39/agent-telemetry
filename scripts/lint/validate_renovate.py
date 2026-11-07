@@ -8,7 +8,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-RENOVATE_VERSION = "44.155.8"
+RENOVATE_VERSION = "44.181.4"
 
 
 def main(args: list[str] | None = None) -> int:
