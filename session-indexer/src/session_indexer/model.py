@@ -10,6 +10,7 @@ from pathlib import PurePath
 
 _WS = re.compile(r"\s+")
 _SHELLS = {"bash", "sh", "zsh"}
+_RUN_DIR = re.compile(r"/(?:agent|review)-(\d{8}-\d{6}-[0-9a-f]{4})/?$")
 
 
 def normalize_command(command: object) -> str | None:
@@ -37,11 +38,18 @@ def project_from_cwd(cwd: str) -> str:
     return parts[-1] if len(parts) > 1 else "unknown"
 
 
+def run_id_from_cwd(cwd: str) -> str:
+    """agent-harness の作業ディレクトリから実行 ID を取り出す。"""
+    match = _RUN_DIR.search(cwd)
+    return match.group(1) if match else ""
+
+
 @dataclass
 class SessionSummary:
     tool: str
     session_id: str
     project: str = "unknown"
+    run_id: str = ""
     models: set[str] = field(default_factory=set)
     first_ts: datetime | None = None
     last_ts: datetime | None = None
@@ -125,6 +133,8 @@ class SessionSummary:
         """Merge another file of the same session (e.g. Claude subagent transcripts)."""
         if self.project == "unknown":
             self.project = other.project
+        if not self.run_id:
+            self.run_id = other.run_id
         self.models |= other.models
         for ts in other._timestamps:
             self.observe_ts(ts)

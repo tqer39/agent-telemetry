@@ -31,6 +31,7 @@ flowchart LR
 ```bash
 mise run setup
 cp .env.example .env            # GF_SECURITY_ADMIN_PASSWORD を設定する
+mkdir -p ~/.local/state/agent-harness/runs   # 無いと Docker が root 所有で作成する
 mise run up                     # docker compose up -d --build
 mise run client:check           # Desktop と CLI の設定変更内容を確認（ドライラン、ファイルは変更しない）
 mise run client:apply           # 設定を書き込む（バックアップを自動で作成）
@@ -89,10 +90,11 @@ Zstandardは `compression.zstd` が利用できる3.14以降で対応します�
 `mise run usage:hook-config` は任意の助言hookの設定を出力するだけで、自動登録しません。
 指標の定義、制約、既存hookを保持した設定方法は[詳細ガイド](local-usage.ja.md)を参照してください。
 
-## 🚧 まだ含まれていないもの
+## 🔗 agent-harness との連携
 
-- **PR がマージされたか**：GitHub API と、どのセッションがどの PR を作ったかの紐づけが必要です。別のコレクターとして追加する予定です。
-- **Claude と Codex の会話の紐づけ**：プロンプトやコンテキストで共通の `run_id` を受け渡す仕組みが必要です。追加予定です。
+`agent_session_run` は作業ディレクトリから得た `run_id` で、セッションと `agent-harness` の実行を結びつけます。
+`agent_run_info`、`agent_run_repairs`、`agent_run_first_round_passed` は、読み取り専用でマウントした `~/.local/state/agent-harness/runs` の実行記録から作ります。
+エフォート、PR の結果、修正回数はこの記録から得るので、このリポジトリに GitHub のトークンは必要ありません。
 
 ## 🔒 セキュリティ
 

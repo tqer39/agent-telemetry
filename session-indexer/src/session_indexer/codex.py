@@ -15,7 +15,7 @@ import json
 import re
 from pathlib import Path, PurePath
 
-from .model import SessionSummary, normalize_command, parse_iso, project_from_cwd
+from .model import SessionSummary, normalize_command, parse_iso, project_from_cwd, run_id_from_cwd
 
 TOOL = "codex"
 _SHELL_FUNCTIONS = {"shell", "shell_command", "exec_command", "container.exec", "local_shell"}
@@ -94,6 +94,8 @@ def _handle_meta(summary: SessionSummary, payload: dict) -> None:
         if isinstance(payload.get(key), str) and payload[key]:
             summary.session_id = payload[key]
             break
+    if isinstance(payload.get("cwd"), str):
+        summary.run_id = run_id_from_cwd(payload["cwd"])
     git = payload.get("git")
     repo_url = git.get("repository_url") if isinstance(git, dict) else None
     if isinstance(repo_url, str) and repo_url:
