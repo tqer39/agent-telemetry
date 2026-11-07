@@ -1,0 +1,88 @@
+"""agent-harness の実行記録の取り込みを確認する。"""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+from session_indexer.claude import parse_claude_file
+from session_indexer.codex import parse_codex_file
+from session_indexer.indexer import Indexer
+from session_indexer.metrics import SessionCollector
+from session_indexer.model import run_id_from_cwd
+from session_indexer.runs import load_runs
+
+
+def test_run_id_from_cwd() -> None:
+    assert run_id_from_cwd("/w/app-worktrees/agent-20261109-060102-ab12") == "20261109-060102-ab12"
+    assert run_id_from_cwd("/s/runs/x.d/review-20261109-060102-ab12") == "20261109-060102-ab12"
+    assert run_id_from_cwd("/w/app") == ""
+    assert run_id_from_cwd("/w/agent-telemetry") == ""
+
+
+def test_load_runs_reads_records_and_skips_broken_files(tmp_path: Path) -> None:
+    record = {
+        "run_id": "r1",
+        "repo": "o/n",
+        "kind": "bugfix",
+        "agent": "codex",
+        "model": "gpt-6.1-sol",
+        "effort": "high",
+        "status": "completed",
+        "repairs": 1,
+        "first_round_passed": False,
+    }
+    (tmp_path / "r1.json").write_text(json.dumps(record), encoding="utf-8")
+    (tmp_path / "broken.json").write_text("{", encoding="utf-8")
+    runs = load_runs(tmp_path)
+    assert [run.run_id for run in runs] == ["r1"]
+    assert runs[0].effort == "high"
+    assert runs[0].repairs == 1
+
+
+def test_load_runs_missing_directory(tmp_path: Path) -> None:
+    assert load_runs(tmp_path / "none") == []
+
+
+def test_parsers_record_run_id(tmp_path: Path) -> None:
+    cwd = "/w/app-worktrees/agent-20261109-060102-ab12"
+    claude = tmp_path / "c.jsonl"
+    row = {
+        "sessionId": "s",
+        "cwd": cwd,
+        "type": "assistant",
+        "timestamp": "2026-10-01T00:00:00Z",
+        "message": {"id": "m", "model": "claude", "usage": {"input_tokens": 1, "output_tokens": 1}, "content": []},
+    }
+    claude.write_text(json.dumps(row) + "\n", encoding="utf-8")
+    assert parse_claude_file(claude, 300).run_id == "20261109-060102-ab12"
+    codex = tmp_path / "x.jsonl"
+    rows = [
+        {
+            "timestamp": "2026-10-01T00:00:00Z",
+            "type": "session_meta",
+            "payload": {"id": "t", "cwd": cwd, "git": {"repository_url": "https://github.com/o/app.git"}},
+        },
+        {
+            "timestamp": "2026-10-01T00:00:10Z",
+            "type": "event_msg",
+            "payload": {
+                "type": "token_count",
+                "info": {"total_token_usage": {"input_tokens": 1, "output_tokens": 1}},
+            },
+        },
+    ]
+    codex.write_text("\n".join(json.dumps(row) for row in rows) + "\n", encoding="utf-8")
+    summary = parse_codex_file(codex, 300)
+    assert summary.run_id == "20261109-060102-ab12"
+    assert summary.project == "app"
+
+
+def test_collector_exposes_runs(tmp_path: Path, monkeypatch) -> None:
+    record = {"run_id": "r1", "repo": "o/n", "effort": "high", "status": "completed", "repairs": 2}
+    (tmp_path / "r1.json").write_text(json.dumps(record), encoding="utf-8")
+    monkeypatch.setenv("AGENT_RUNS_DIR", str(tmp_path))
+    families = {family.name: family for family in SessionCollector(Indexer(tmp_path / "c", tmp_path / "x", 14, 300)).collect()}
+    info = families["agent_run_info"].samples[0].labels
+    assert info["run_id"] == "r1" and info["effort"] == "high"
+    assert families["agent_run_repairs"].samples[0].value == 2

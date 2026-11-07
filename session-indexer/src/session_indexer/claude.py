@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from .model import SessionSummary, normalize_command, parse_iso, project_from_cwd
+from .model import SessionSummary, normalize_command, parse_iso, project_from_cwd, run_id_from_cwd
 
 TOOL = "claude-code"
 _SHELL_TOOLS = {"Bash"}
@@ -39,6 +39,8 @@ def parse_claude_file(path: Path, idle_gap_seconds: float) -> SessionSummary | N
                 if not isinstance(session_id, str):
                     continue  # e.g. leading "summary" lines without a session id
                 summary = SessionSummary(tool=TOOL, session_id=session_id)
+            if not summary.run_id and isinstance(entry.get("cwd"), str):
+                summary.run_id = run_id_from_cwd(entry["cwd"])
             if summary.project == "unknown" and isinstance(entry.get("cwd"), str):
                 summary.project = project_from_cwd(entry["cwd"])
 

@@ -85,10 +85,11 @@ Plaintext and gzip work on the pinned Python 3.13; Zstandard requires a Python b
 The optional `mise run usage:hook-config` prints advisory hook configuration without installing it.
 The [detailed guide](docs/local-usage.ja.md) covers metrics, limitations and preserving existing hooks.
 
-## Not included (yet)
+## agent-harness integration
 
-- **PR merged or not**: needs the GitHub API and a session to PR link. Planned as a separate collector.
-- **Claude to Codex correlation**: needs a shared `run_id` passed in the prompt/context. Planned.
+`agent_session_run` links sessions to `agent-harness` runs using the `run_id` found in the working directory.
+`agent_run_info`, `agent_run_repairs` and `agent_run_first_round_passed` come from the run records in `~/.local/state/agent-harness/runs`, mounted read-only.
+Effort, PR results and repair counts come from these records, so no GitHub token is needed here.
 
 ## Security
 

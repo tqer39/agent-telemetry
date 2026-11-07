@@ -38,9 +38,11 @@ services:
       LOOKBACK_DAYS: ${LOOKBACK_DAYS:-14}
       SCAN_INTERVAL_SECONDS: ${SCAN_INTERVAL_SECONDS:-60}
       IDLE_GAP_SECONDS: ${IDLE_GAP_SECONDS:-300}
+      AGENT_RUNS_DIR: /data/agent-runs
     volumes:
       - ${CLAUDE_HOME:-${HOME}/.claude}/projects:/data/claude/projects:ro
       - ${CODEX_HOME:-${HOME}/.codex}/sessions:/data/codex/sessions:ro
+      - ${HOME}/.local/state/agent-harness/runs:/data/agent-runs:ro
     read_only: true
     cap_drop: [ALL]
     security_opt: ["no-new-privileges:true"]

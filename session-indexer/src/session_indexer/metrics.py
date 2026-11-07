@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import os
 from collections.abc import Iterator
+from pathlib import Path
 
 from prometheus_client.core import GaugeMetricFamily
 from prometheus_client.registry import Collector
 
 from .indexer import Indexer
+from .runs import load_runs
 
 _LABELS = ["tool", "session_id", "project"]
 
@@ -59,6 +62,24 @@ class SessionCollector(Collector):
             errors.add_metric(base, s.parse_errors)
 
         yield from (info, start, wall, active, tokens, cache, calls, fails, shell, repeated, retries, errors)
+
+        session_run = GaugeMetricFamily(
+            "agent_session_run",
+            "agent-harness run for a session (value is always 1)",
+            labels=["tool", "session_id", "run_id"],
+        )
+        for s in sessions:
+            if s.run_id:
+                session_run.add_metric([s.tool, s.session_id, s.run_id], 1)
+        run_labels = ["run_id", "repo", "kind", "agent", "model", "effort", "status"]
+        run_info = GaugeMetricFamily("agent_run_info", "agent-harness run (value is always 1)", labels=run_labels)
+        run_repairs = GaugeMetricFamily("agent_run_repairs", "Repair rounds in the run", labels=["run_id"])
+        run_first = GaugeMetricFamily("agent_run_first_round_passed", "1 when the run passed without repairs", labels=["run_id"])
+        for run in load_runs(Path(os.environ.get("AGENT_RUNS_DIR", "/data/agent-runs"))):
+            run_info.add_metric([run.run_id, run.repo, run.kind, run.agent, run.model, run.effort, run.status], 1)
+            run_repairs.add_metric([run.run_id], run.repairs)
+            run_first.add_metric([run.run_id], 1 if run.first_round_passed else 0)
+        yield from (session_run, run_info, run_repairs, run_first)
 
         st = self.indexer.stats
         scanned = GaugeMetricFamily("agent_indexer_files_scanned", "Transcript files inside the lookback window")
