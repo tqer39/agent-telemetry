@@ -24,23 +24,26 @@ def load_runs(directory: Path) -> list[Run]:
     """読めない記録は飛ばす。書き込み途中の記録で計測を止めないため。"""
     if not directory.is_dir():
         return []
-    runs: list[Run] = []
+    runs: dict[str, Run] = {}
     for path in sorted(directory.glob("*.json")):
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
-            runs.append(
-                Run(
-                    run_id=str(data["run_id"]),
-                    repo=str(data.get("repo", "unknown")),
-                    kind=str(data.get("kind", "unknown")),
-                    agent=str(data.get("agent", "unknown")),
-                    model=str(data.get("model", "unknown")),
-                    effort=str(data.get("effort", "unknown")),
-                    status=str(data.get("status", "unknown")),
-                    repairs=int(data.get("repairs", 0)),
-                    first_round_passed=bool(data.get("first_round_passed", False)),
-                )
+            first_round_passed = data.get("first_round_passed", False)
+            if not isinstance(first_round_passed, bool):
+                continue
+            run_id = str(data["run_id"])
+            # 同じ実行 ID が複数あると Prometheus の系列が重複するので、1 件に絞る。
+            runs[run_id] = Run(
+                run_id=run_id,
+                repo=str(data.get("repo", "unknown")),
+                kind=str(data.get("kind", "unknown")),
+                agent=str(data.get("agent", "unknown")),
+                model=str(data.get("model", "unknown")),
+                effort=str(data.get("effort", "unknown")),
+                status=str(data.get("status", "unknown")),
+                repairs=int(data.get("repairs", 0)),
+                first_round_passed=first_round_passed,
             )
         except (OSError, ValueError, KeyError, TypeError):
             continue
-    return runs
+    return list(runs.values())

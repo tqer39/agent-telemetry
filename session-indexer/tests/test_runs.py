@@ -9,7 +9,7 @@ from session_indexer.claude import parse_claude_file
 from session_indexer.codex import parse_codex_file
 from session_indexer.indexer import Indexer
 from session_indexer.metrics import SessionCollector
-from session_indexer.model import run_id_from_cwd
+from session_indexer.model import SessionSummary, run_id_from_cwd
 from session_indexer.runs import load_runs
 
 
@@ -86,3 +86,20 @@ def test_collector_exposes_runs(tmp_path: Path, monkeypatch) -> None:
     info = families["agent_run_info"].samples[0].labels
     assert info["run_id"] == "r1" and info["effort"] == "high"
     assert families["agent_run_repairs"].samples[0].value == 2
+
+
+def test_load_runs_skips_invalid_flag_and_deduplicates(tmp_path: Path) -> None:
+    (tmp_path / "a.json").write_text(json.dumps({"run_id": "r1", "first_round_passed": "false"}), encoding="utf-8")
+    (tmp_path / "b.json").write_text(json.dumps({"run_id": "r2", "status": "old"}), encoding="utf-8")
+    (tmp_path / "c.json").write_text(json.dumps({"run_id": "r2", "status": "new"}), encoding="utf-8")
+    runs = load_runs(tmp_path)
+    assert [(run.run_id, run.status) for run in runs] == [("r2", "new")]
+
+
+def test_merge_keeps_run_id() -> None:
+    first = SessionSummary(tool="codex", session_id="s")
+    second = SessionSummary(tool="codex", session_id="s", run_id="20261109-060102-ab12")
+    first.merge(second)
+    assert first.run_id == "20261109-060102-ab12"
+    first.merge(SessionSummary(tool="codex", session_id="s", run_id="other"))
+    assert first.run_id == "20261109-060102-ab12"

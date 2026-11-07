@@ -133,6 +133,8 @@ class SessionSummary:
         """Merge another file of the same session (e.g. Claude subagent transcripts)."""
         if self.project == "unknown":
             self.project = other.project
+        if not self.run_id:
+            self.run_id = other.run_id
         self.models |= other.models
         for ts in other._timestamps:
             self.observe_ts(ts)
