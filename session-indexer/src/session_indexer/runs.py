@@ -6,6 +6,8 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 
+_MAX_REPAIRS = 2**53
+
 
 @dataclass(frozen=True)
 class Run:
@@ -32,7 +34,11 @@ def load_runs(directory: Path) -> list[Run]:
                 continue
             run_id = data.get("run_id")
             first_round_passed = data.get("first_round_passed", False)
+            repairs = data.get("repairs", 0)
             if not isinstance(run_id, str) or not run_id or not isinstance(first_round_passed, bool):
+                continue
+            # Prometheus の値は float に変換される。変換できない値は収集全体を止める。
+            if not isinstance(repairs, int) or isinstance(repairs, bool) or not 0 <= repairs <= _MAX_REPAIRS:
                 continue
             # 同じ実行 ID が複数あると Prometheus の系列が重複するので、1 件に絞る。
             runs[run_id] = Run(
@@ -43,9 +49,9 @@ def load_runs(directory: Path) -> list[Run]:
                 model=str(data.get("model", "unknown")),
                 effort=str(data.get("effort", "unknown")),
                 status=str(data.get("status", "unknown")),
-                repairs=int(data.get("repairs", 0)),
+                repairs=repairs,
                 first_round_passed=first_round_passed,
             )
-        except (OSError, ValueError, KeyError, TypeError, OverflowError):
+        except (OSError, ValueError, KeyError, TypeError):
             continue
     return list(runs.values())
