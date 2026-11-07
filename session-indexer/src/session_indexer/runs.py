@@ -28,10 +28,12 @@ def load_runs(directory: Path) -> list[Run]:
     for path in sorted(directory.glob("*.json")):
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
-            first_round_passed = data.get("first_round_passed", False)
-            if not isinstance(first_round_passed, bool):
+            if not isinstance(data, dict):
                 continue
-            run_id = str(data["run_id"])
+            run_id = data.get("run_id")
+            first_round_passed = data.get("first_round_passed", False)
+            if not isinstance(run_id, str) or not run_id or not isinstance(first_round_passed, bool):
+                continue
             # 同じ実行 ID が複数あると Prometheus の系列が重複するので、1 件に絞る。
             runs[run_id] = Run(
                 run_id=run_id,
