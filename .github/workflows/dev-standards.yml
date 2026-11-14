@@ -20,7 +20,7 @@ jobs:
           from pathlib import Path
           state = json.loads(Path('.standards/state.json').read_bytes())
           lock = json.loads(Path('.standards/lock.json').read_bytes())
-          required = {'.editorconfig', '.gitignore', '.gitattributes', 'mise.toml', '.standards/tasks.standards.toml', 'AGENTS.md', '.codex/hooks.json', '.standards/rules.md', '.github/workflows/dev-standards.yml'}
+          required = {'.editorconfig', '.gitignore', '.gitattributes', 'mise.toml', '.standards/tasks.standards.toml', 'AGENTS.md', '.codex/hooks.json', '.standards/rules.md', '.github/workflows/dev-standards.yml', '.github/workflows/dev-standards-version-lag.yml', '.claude/rules/dev-standards-agent-harness.md'}
           assert state['schemaVersion'] == 1
           assert state['bundleSha256'] == lock['bundleSha256']
           assert set(state['files']) == required
@@ -30,7 +30,7 @@ jobs:
               assert expected['exists'] and target.read_bytes() == expected['content'].encode(), name
           PYTHON
       - name: Check canonical sources with pinned CLI
-        run: mise exec go@1.27.3 -- go run github.com/tqer39/dev-standards/cmd/dev-standards@v0.4.7 check --repo .
+        run: mise exec go@1.27.4 -- go run github.com/tqer39/dev-standards/cmd/dev-standards@v0.4.11 check --repo .
       - run: mise run lint
       - run: mise run format:check
       - run: mise run test
