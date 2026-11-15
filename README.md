@@ -23,7 +23,6 @@ Transcripts are **summarized, never shipped**: source code, prompts and secrets 
 ```bash
 mise run setup
 cp .env.example .env            # set GF_SECURITY_ADMIN_PASSWORD
-mkdir -p ~/.local/state/agent-harness/runs   # otherwise Docker creates it as root
 mise run up                     # docker compose up -d --build
 mise run client:check           # dry run of the Desktop/CLI settings change
 mise run client:apply           # write them (backups are created)
@@ -85,12 +84,6 @@ Plaintext and gzip work on the pinned Python 3.13; Zstandard requires a Python b
 `compression.zstd` (3.14+). Unsupported compressed files are counted and skipped.
 The optional `mise run usage:hook-config` prints advisory hook configuration without installing it.
 The [detailed guide](docs/local-usage.ja.md) covers metrics, limitations and preserving existing hooks.
-
-## agent-harness integration
-
-`agent_session_run` links sessions to `agent-harness` runs using the `run_id` found in the working directory.
-`agent_run_info`, `agent_run_repairs` and `agent_run_first_round_passed` come from the run records in `~/.local/state/agent-harness/runs`, mounted read-only.
-Effort, PR results and repair counts come from these records, so no GitHub token is needed here.
 
 ## Security
 
