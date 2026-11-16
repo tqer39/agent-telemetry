@@ -67,7 +67,7 @@ services:
     restart: unless-stopped
 
   loki:
-    image: grafana/loki:3.7.9
+    build: ./loki
     command: ["-config.file=/etc/loki/local-config.yaml"]
     ports:
       - "127.0.0.1:3100:3100"
@@ -75,14 +75,14 @@ services:
       - ./loki/loki-config.yaml:/etc/loki/local-config.yaml:ro
       - loki-data:/loki
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3100/ready"]
+      test: ["CMD", "/usr/local/bin/wget", "--spider", "-q", "http://localhost:3100/ready"]
       interval: 10s
       timeout: 5s
       retries: 5
     restart: unless-stopped
 
   tempo:
-    image: grafana/tempo:2.10.10
+    build: ./tempo
     command: ["-config.file=/etc/tempo/config.yaml"]
     ports:
       - "127.0.0.1:3200:3200"
@@ -90,7 +90,7 @@ services:
       - ./tempo/tempo-config.yaml:/etc/tempo/config.yaml:ro
       - tempo-data:/var/tempo
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3200/ready"]
+      test: ["CMD", "/usr/local/bin/wget", "--spider", "-q", "http://localhost:3200/ready"]
       interval: 10s
       timeout: 5s
       retries: 5
