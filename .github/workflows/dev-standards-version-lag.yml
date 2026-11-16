@@ -24,6 +24,7 @@ jobs:
           from pathlib import Path
           source = 'https://github.com/tqer39/dev-standards.git'
           grace_days = 7
+          allow_major = False
           def fail(message):
               print('::error::' + message)
               sys.exit(1)
@@ -43,16 +44,22 @@ jobs:
                   published.append(match.group(1))
           if not published:
               fail('no published dev-standards versions were found')
-          unapplied = sorted((v for v in published if parse(v) > applied), key=parse)
+          policy = f'update.allowMajor={str(allow_major).lower()}'
+          unapplied = [v for v in published if parse(v) > applied and (allow_major or parse(v)[0] == applied[0])]
           if not unapplied:
-              print(f'dev-standards {applied_text} has no newer published version')
+              print(f'dev-standards {applied_text} has no newer published version allowed by {policy}')
               sys.exit(0)
-          # The oldest one decides, so newer tags cannot reset the clock.
-          oldest = unapplied[0]
-          git('fetch', '--quiet', '--depth=1', source, 'refs/tags/v' + oldest)
-          # Tags are lightweight and record no time of their own, so the tagged commit stands in.
-          age_days = (time.time() - int(git('log', '-1', '--format=%ct', 'FETCH_HEAD'))) / 86400
+          # 他の major のタグを取得せず、利用先自身のタグも上書きしない。
+          def local_ref(version):
+              return 'refs/dev-standards-version-lag/v' + version
+          git('fetch', '--quiet', '--depth=1', '--no-tags', source,
+              *('refs/tags/v' + v + ':' + local_ref(v) for v in unapplied))
+          # バックポートで版番号順と日時順が逆転しても、最古のコミットを基準にする。
+          oldest_timestamp, _, oldest = min(
+              (int(git('log', '-1', '--format=%ct', local_ref(v) + '^{commit}')), parse(v), v)
+              for v in unapplied)
+          age_days = (time.time() - oldest_timestamp) / 86400
           if age_days >= grace_days:
-              fail(f'dev-standards {applied_text} is applied, but the commit of {oldest} is {age_days:.1f} days old. The rollout may have failed or stopped; check dev-standards maintain on the maintenance host.')
-          print(f'the commit of dev-standards {oldest} is {age_days:.1f} days old, within the {grace_days}-day grace period')
+              fail(f'dev-standards {applied_text} is applied, but the oldest eligible unapplied commit ({oldest}, {policy}) is {age_days:.1f} days old. Check dev-standards maintain and the update policy on the maintenance host.')
+          print(f'the oldest eligible unapplied commit ({oldest}, {policy}) is {age_days:.1f} days old, within the {grace_days}-day grace period')
           PYTHON
