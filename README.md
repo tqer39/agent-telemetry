@@ -32,6 +32,13 @@ open http://127.0.0.1:3000      # dashboards in the "Agent Telemetry" folder
 
 No Docker? `mise run report` prints the per-session table straight from the transcripts.
 
+Loki and Tempo are built locally from their upstream images with a static BusyBox
+`wget` for readiness checks. Their non-root users and entrypoints are inherited.
+After updating a Dockerfile, run `mise run up` (or `docker compose up -d --build`)
+to rebuild the images; `docker compose pull` alone does not update them.
+Use `bash scripts/test-storage-health.sh` to test both probes in an isolated stack
+(Docker Compose 2.24.4 or later). The test removes only its own containers, volumes, and built images.
+
 ## Verify what actually arrives (do this once)
 
 Desktop apps may send fewer signals than the CLIs. Do not assume; check:

@@ -40,6 +40,13 @@ open http://127.0.0.1:3000      # 「Agent Telemetry」フォルダにダッシ�
 
 Docker を使わない場合は `mise run report` を実行してください。会話記録を直接読んで、セッションごとの集計表を出力します。
 
+Loki と Tempo は、readiness 検査用の静的 BusyBox `wget` を上流イメージに追加してローカルでビルドします。
+非 root ユーザーとエントリーポイントは上流の設定を引き継ぎます。
+Dockerfile の更新後は `mise run up`（または `docker compose up -d --build`）で再ビルドしてください。
+`docker compose pull` だけでは、ビルド済みイメージは更新されません。
+`bash scripts/test-storage-health.sh` で、独立したスタック上の正常応答と HTTP エラーを検査できます
+（Docker Compose 2.24.4 以降）。検査後に削除するのは、その検査専用のコンテナ・ボリューム・ビルドしたイメージだけです。
+
 ## ✅ 実際にデータが届いているか確認する（最初に1回）
 
 Desktop アプリは CLI より送るデータの種類が少ない可能性があります。思い込まずに確認してください。
