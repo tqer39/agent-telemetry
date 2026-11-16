@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "repository": "tqer39/dev-standards",
-  "version": "0.4.17",
-  "bundleSha256": "f3936007ba9db09d12170b28fd0aebff9edde9f0e8aa229cb6c929cbeedcfc76",
+  "version": "0.4.21",
+  "bundleSha256": "0ae5304c337b7ba1d6c6b06eae8e5fdb9be6ea962ca4f586dd01aed81543370a",
   "gitignoreSha256": "f0898d70dc2f664094d8ed9a216645fec0f47e4e959942e15c0f50b5a79b48d3",
   "gitignoreUrl": "https://www.toptal.com/developers/gitignore/api/python,linux,macos,windows",
   "goVersion": "",
