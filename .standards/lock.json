@@ -7,5 +7,5 @@
   "gitignoreUrl": "https://www.toptal.com/developers/gitignore/api/python,linux,macos,windows",
   "goVersion": "",
   "pythonVersion": "3.15.2",
-  "uvVersion": "0.13.6"
+  "uvVersion": "0.13.7"
 }
