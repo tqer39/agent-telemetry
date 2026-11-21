@@ -15,3 +15,5 @@ session-indexer/uv.lock text eol=lf
 /.standards/gitignore.local -text whitespace=-blank-at-eol
 /.standards/vendor/gitignore/*.txt -text whitespace=-blank-at-eol
 /docs/decisions/0001-language.md text eol=lf
+/CLAUDE.md text eol=lf
+/.claude/settings.json text eol=lf

@@ -20,7 +20,7 @@ jobs:
           from pathlib import Path
           state = json.loads(Path('.standards/state.json').read_bytes())
           lock = json.loads(Path('.standards/lock.json').read_bytes())
-          required = {'.editorconfig', '.gitignore', '.gitattributes', 'mise.toml', '.standards/tasks.standards.toml', 'AGENTS.md', '.codex/hooks.json', '.standards/rules.md', '.github/workflows/dev-standards.yml', '.github/workflows/dev-standards-version-lag.yml'}
+          required = {'.editorconfig', '.gitignore', '.gitattributes', 'mise.toml', '.standards/tasks.standards.toml', 'AGENTS.md', 'CLAUDE.md', '.claude/settings.json', '.standards/rules.md', '.github/workflows/dev-standards.yml', '.github/workflows/dev-standards-version-lag.yml'}
           assert state['schemaVersion'] == 1
           assert state['bundleSha256'] == lock['bundleSha256']
           assert set(state['files']) == required
