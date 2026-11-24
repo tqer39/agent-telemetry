@@ -36,6 +36,9 @@
     "rollout": "standard"
   },
   "ci": {
+    "pushBranches": [
+      "main"
+    ],
     "prBudgetSeconds": 600,
     "minimumSamples": 20,
     "breachWindows": 2
