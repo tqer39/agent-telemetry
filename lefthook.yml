@@ -18,8 +18,10 @@ pre-commit:
       glob: "session-indexer/**/*.py"
       run: uv run --project session-indexer ruff check {staged_files} && uv run --project session-indexer ruff format --check {staged_files}
     compose-config:
-      glob: "compose.yaml"
-      run: GF_SECURITY_ADMIN_PASSWORD=lint docker compose config -q
+      glob: "compose*.yaml"
+      run: >-
+        GF_SECURITY_ADMIN_PASSWORD=lint docker compose config -q &&
+        GF_SECURITY_ADMIN_PASSWORD=lint COMPOSE_FILE=compose.yaml:compose.orca.yaml docker compose config -q
     renovate-config-validator:
       glob: "renovate.json5"
       run: python3 scripts/lint/validate_renovate.py {staged_files}

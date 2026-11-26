@@ -63,6 +63,32 @@ OTLP 経路で届かないデータがあっても、**Agent Sessions** ダッ�
 | --- | --- |
 | Agent Sessions（Claude + Codex） | session-indexer（今回新規に作成） |
 | Claude Code / Codex CLI / Comparison / Overview | OTLP（llm-cli-telemetry から流用） |
+| トークンとコスト（任意、UID `token-cost`） | OTLP |
+
+### 任意のダッシュボード（Orca を使う場合）
+
+Overview・Comparison・Claude Code にあったトークン使用量・コスト・キャッシュヒット率のパネルは、
+別の **トークンとコスト** ダッシュボード（`grafana/dashboards-optional/token-cost.json`）にまとめています。
+手戻り・コミット・PR・処理時間・ログのパネルは元のダッシュボードに残しています。
+既定では表示されます。Orca でトークン使用量とコストを見ているなら、`.env` に次の行を書くと外せます。
+
+```bash
+COMPOSE_FILE=compose.yaml:compose.orca.yaml   # Docker Compose 2.24 以降が必要
+```
+
+書いたら `mise run up` を実行します。`compose.orca.yaml` は任意ダッシュボードの provisioning ファイルをマウントしないので、
+Grafana がそのダッシュボードを削除します。データの収集（collector・session-indexer・Prometheus）は変わらず、
+Agent Sessions のセッション別トークン数も残ります。戻すときは行を消して `mise run up` を実行します。
+
+既存の利用者への影響:
+
+- Overview・Comparison・Claude Code の UID、スター、残ったパネルの ID は変わりません。ただし、トークン・コスト・キャッシュの
+  パネルは `token-cost` に移ったので、それらのパネルへのリンク（`viewPanel=`）は使えなくなります。
+- この3つのダッシュボードを Grafana の画面から保存して変更していた場合、その変更は provisioning のファイルで上書きされます。
+- llm-cli-telemetry から引き継いだ Gemini CLI 用のパネルは削除しました。
+
+Orca は全期間の使用量を保持します。Orca を使っているなら、`.env` の `PROMETHEUS_RETENTION`（既定 `90d`）と
+`LOOKBACK_DAYS`（既定 `14`）を短くしてもかまいません。
 
 ## 📏 session-indexer が出すメトリクス
 

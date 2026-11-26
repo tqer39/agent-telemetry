@@ -29,7 +29,9 @@ jobs:
           uv run --isolated --no-project --with "$RUNNER_TEMP/usage-wheel/"*.whl agent-telemetry --help
           uv run --isolated --no-project --with "$RUNNER_TEMP/usage-wheel/"*.whl session-indexer --help
       - name: compose file is valid
-        run: GF_SECURITY_ADMIN_PASSWORD=ci docker compose config -q
+        run: |
+          GF_SECURITY_ADMIN_PASSWORD=ci docker compose config -q
+          GF_SECURITY_ADMIN_PASSWORD=ci COMPOSE_FILE=compose.yaml:compose.orca.yaml docker compose config -q
       - name: Loki and Tempo readiness probes work
         run: bash scripts/test-storage-health.sh
       - name: collector config is valid
@@ -45,7 +47,7 @@ jobs:
           -v "$PWD/prometheus:/etc/prometheus:ro"
           prom/prometheus:v3.1.0 check config /etc/prometheus/prometheus.yml
       - name: dashboards are valid JSON
-        run: for f in grafana/dashboards/*.json; do python3 -m json.tool "$f" > /dev/null; done
+        run: for f in grafana/dashboards/*.json grafana/dashboards-optional/*.json; do python3 -m json.tool "$f" > /dev/null; done
       - name: yamllint / actionlint
         run: yamllint --no-warnings . && actionlint
 
