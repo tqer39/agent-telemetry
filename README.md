@@ -65,7 +65,7 @@ Retries, commits, PRs, latency and logs stay in the original dashboards.
 It is on by default. If Orca already shows your token usage and cost, turn it off in `.env`:
 
 ```bash
-COMPOSE_FILE=compose.yaml:compose.orca.yaml   # Docker Compose 2.24 or later
+COMPOSE_FILE=compose.yaml:compose.orca.yaml   # Docker Compose 2.24.4 or later
 ```
 
 Then run `mise run up`. `compose.orca.yaml` only stops mounting the optional provisioning file,

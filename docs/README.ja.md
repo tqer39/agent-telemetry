@@ -73,7 +73,7 @@ Overview・Comparison・Claude Code にあったトークン使用量・コス�
 既定では表示されます。Orca でトークン使用量とコストを見ているなら、`.env` に次の行を書くと外せます。
 
 ```bash
-COMPOSE_FILE=compose.yaml:compose.orca.yaml   # Docker Compose 2.24 以降が必要
+COMPOSE_FILE=compose.yaml:compose.orca.yaml   # Docker Compose 2.24.4 以降が必要
 ```
 
 書いたら `mise run up` を実行します。`compose.orca.yaml` は任意ダッシュボードの provisioning ファイルをマウントしないので、

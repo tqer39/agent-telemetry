@@ -20,7 +20,7 @@ pre-commit:
     compose-config:
       glob: "compose*.yaml"
       run: >-
-        GF_SECURITY_ADMIN_PASSWORD=lint docker compose config -q &&
+        GF_SECURITY_ADMIN_PASSWORD=lint docker compose -f compose.yaml config -q &&
         GF_SECURITY_ADMIN_PASSWORD=lint COMPOSE_FILE=compose.yaml:compose.orca.yaml docker compose config -q
     renovate-config-validator:
       glob: "renovate.json5"

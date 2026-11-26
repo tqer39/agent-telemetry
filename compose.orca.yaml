@@ -2,7 +2,7 @@
 # Enable it in .env:  COMPOSE_FILE=compose.yaml:compose.orca.yaml
 # It only changes which Grafana dashboards are provisioned; data collection
 # (collector, session-indexer, Prometheus, Loki, Tempo) is untouched.
-# `!override` needs Docker Compose 2.24 or later.
+# `!override` needs Docker Compose 2.24.4 or later.
 
 services:
   grafana:
