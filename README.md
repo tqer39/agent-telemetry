@@ -79,8 +79,22 @@ Changes for existing users:
 - Edits saved from the Grafana UI to these three dashboards are overwritten by the provisioned files.
 - The Gemini CLI panels inherited from llm-cli-telemetry were removed.
 
-If you use Orca, which keeps the full usage history, you can also shorten
-`PROMETHEUS_RETENTION` (default `90d`) and `LOOKBACK_DAYS` (default `14`) in `.env`.
+### Retention and scan window
+
+Two `.env` settings decide how far back you can look, and they work differently:
+
+- `PROMETHEUS_RETENTION` (default `90d`) is how long Prometheus keeps **every** sample, not only tokens:
+  active time, tool failures, retries and the OTLP metrics as well. Older samples are deleted,
+  and raising the value later does not bring them back.
+- `LOOKBACK_DAYS` (default `14`) is not storage. session-indexer only reads transcript files modified
+  within this many days and drops older ones from its output, so shortening it removes older sessions
+  from the current Agent Sessions list and totals at the next scan. Raising it again brings them back
+  while the JSONL files are still on disk.
+
+Keep `PROMETHEUS_RETENTION` at least as long as the longest period you want to chart here, and
+`LOOKBACK_DAYS` at least as long as the period you want Agent Sessions to list. Seeing token usage in
+another tool such as Orca does not replace either: this stack cannot read that tool's history.
+Shorten them only to save disk, and only to periods you no longer need in this Grafana.
 
 ## Metrics from session-indexer
 
