@@ -1,0 +1,13 @@
+# Dashboards that overlap with Orca's usage view (tokens, cost, cache).
+# compose.orca.yaml does not mount this file, so Grafana removes them.
+apiVersion: 1
+providers:
+  - name: optional
+    orgId: 1
+    folder: Agent Telemetry
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      path: /var/lib/grafana/dashboards-optional
+      foldersFromFilesStructure: false

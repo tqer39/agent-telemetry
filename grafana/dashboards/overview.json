@@ -1,11 +1,11 @@
 {
   "uid": "llm-overview",
   "title": "テレメトリーの概要",
-  "description": "LLM CLI ツールのコスト、作業実績、使用量を表示します。",
+  "description": "LLM CLI ツールの作業実績とイベントを表示します。トークンとコストは「トークンとコスト」ダッシュボードにあります。",
   "tags": ["llm-telemetry"],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 4,
+  "version": 5,
   "refresh": "30s",
   "time": {
     "from": "now-6h",
@@ -30,60 +30,15 @@
     {
       "id": 1,
       "type": "row",
-      "title": "コストとセッション",
+      "title": "作業実績",
       "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
       "collapsed": false
-    },
-    {
-      "id": 2,
-      "type": "stat",
-      "title": "合計コスト",
-      "description": "Claude Code の推定コストの合計です。",
-      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 1 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "targets": [
-        {
-          "expr": "sum(claude_code_cost_usage_USD_total)",
-          "legendFormat": "Cost"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 1 }, { "color": "red", "value": 10 }] },
-          "color": { "mode": "thresholds" },
-          "unit": "currencyUSD",
-          "noValue": "$0.00"
-        }
-      },
-      "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } }
-    },
-    {
-      "id": 3,
-      "type": "stat",
-      "title": "合計トークン数",
-      "description": "Claude Code と Gemini CLI のトークン使用量の合計です。",
-      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 1 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "targets": [
-        {
-          "expr": "sum(claude_code_token_usage_tokens_total) + sum(gen_ai_client_token_usage_sum{service_name=\"gemini-cli\"}) or sum(claude_code_token_usage_tokens_total) or sum(gen_ai_client_token_usage_sum{service_name=\"gemini-cli\"})",
-          "legendFormat": "Tokens"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "thresholds": { "steps": [{ "color": "purple", "value": null }, { "color": "orange", "value": 10000 }] },
-          "color": { "mode": "thresholds" },
-          "unit": "short"
-        }
-      },
-      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } }
     },
     {
       "id": 4,
       "type": "stat",
       "title": "使用中のツール",
-      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 1 },
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 1 },
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
@@ -104,7 +59,7 @@
       "id": 5,
       "type": "stat",
       "title": "イベント数",
-      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 1 },
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 1 },
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
@@ -122,40 +77,11 @@
       "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["sum"] } }
     },
     {
-      "id": 6,
-      "type": "row",
-      "title": "コストと作業実績",
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 },
-      "collapsed": false
-    },
-    {
-      "id": 7,
-      "type": "timeseries",
-      "title": "コストの推移（Claude Code）",
-      "description": "モデル別の毎秒あたりの平均コスト増加額（米ドル／秒）の推移です。直近5分間の平均で、総費用ではありません。",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "targets": [
-        {
-          "expr": "sum by (model) (rate(claude_code_cost_usage_USD_total[5m]))",
-          "legendFormat": "{{model}}"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "fillOpacity": 20, "stacking": { "mode": "normal" } },
-          "unit": "currencyUSD",
-          "color": { "mode": "palette-classic" }
-        }
-      },
-      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["sum", "mean"] } }
-    },
-    {
       "id": 8,
       "type": "stat",
       "title": "コミット数",
       "description": "Claude Code が作成したコミットの合計です。",
-      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 6 },
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 1 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         { "expr": "sum(claude_code_commit_count_total)", "legendFormat": "Commits" }
@@ -174,7 +100,7 @@
       "type": "stat",
       "title": "プルリクエスト数",
       "description": "Claude Code が作成した PR の合計です。",
-      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 6 },
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 1 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         { "expr": "sum(claude_code_pull_request_count_total)", "legendFormat": "PRs" }
@@ -193,7 +119,7 @@
       "type": "stat",
       "title": "変更行数",
       "description": "Claude Code の変更行数の合計です。",
-      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 6 },
+      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 1 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         { "expr": "sum(claude_code_lines_of_code_count_total)", "legendFormat": "LOC" }
@@ -212,7 +138,7 @@
       "type": "stat",
       "title": "実作業時間",
       "description": "Claude Code の実作業時間です。",
-      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 10 },
+      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 1 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         { "expr": "sum(claude_code_active_time_seconds_total)", "legendFormat": "Active" }
@@ -228,82 +154,18 @@
       "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } }
     },
     {
-      "id": 12,
-      "type": "stat",
-      "title": "キャッシュヒット率",
-      "description": "Claude Code のキャッシュヒット率です。",
-      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 10 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "targets": [
-        {
-          "expr": "claude_code:cache_hit_rate",
-          "legendFormat": "Cache %"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "thresholds": { "steps": [{ "color": "red", "value": null }, { "color": "yellow", "value": 30 }, { "color": "green", "value": 60 }] },
-          "color": { "mode": "thresholds" },
-          "unit": "percent",
-          "noValue": "N/A"
-        }
-      },
-      "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } }
-    },
-    {
       "id": 13,
       "type": "row",
       "title": "ツール別の活動",
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 14 },
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 },
       "collapsed": false
-    },
-    {
-      "id": 14,
-      "type": "timeseries",
-      "title": "トークン使用量（Claude Code）",
-      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 15 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "targets": [
-        {
-          "expr": "sum by (type) (rate(claude_code_token_usage_tokens_total[5m]))",
-          "legendFormat": "{{type}}"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "fillOpacity": 20, "pointSize": 5, "showPoints": "auto" },
-          "unit": "short"
-        }
-      },
-      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["sum", "mean", "max"] } }
-    },
-    {
-      "id": 15,
-      "type": "timeseries",
-      "title": "トークン使用量（Gemini CLI）",
-      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 15 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "targets": [
-        {
-          "expr": "sum by (gen_ai_token_type) (rate(gen_ai_client_token_usage_sum{service_name=\"gemini-cli\"}[5m]))",
-          "legendFormat": "{{gen_ai_token_type}}"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "fillOpacity": 20, "pointSize": 5, "showPoints": "auto" },
-          "unit": "short",
-          "color": { "mode": "palette-classic" }
-        }
-      },
-      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["sum", "mean"] } }
     },
     {
       "id": 16,
       "type": "timeseries",
       "title": "イベント発生状況（全ツール）",
       "description": "全 CLI ツールのイベント発生率です。",
-      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 15 },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 6 },
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
@@ -325,14 +187,14 @@
       "id": 17,
       "type": "row",
       "title": "最近のイベント",
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 23 },
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 14 },
       "collapsed": false
     },
     {
       "id": 18,
       "type": "logs",
       "title": "最近のイベント",
-      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 24 },
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 15 },
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {

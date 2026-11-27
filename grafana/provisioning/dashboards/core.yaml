@@ -1,3 +1,5 @@
+# Core dashboards. Keep the provider name "default": renaming it makes Grafana
+# delete and re-create these dashboards, which drops users' stars.
 apiVersion: 1
 providers:
   - name: default

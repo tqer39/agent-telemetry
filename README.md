@@ -55,6 +55,46 @@ Anything missing on the OTLP path is still covered by the **Agent Sessions** das
 | --- | --- |
 | Agent Sessions (Claude + Codex) | session-indexer (new) |
 | Claude Code / Codex CLI / Comparison / Overview | OTLP (from llm-cli-telemetry) |
+| Tokens and Cost (optional, UID `token-cost`) | OTLP |
+
+### Optional dashboards (Orca users)
+
+Token usage, cost and cache-hit panels from Overview, Comparison and Claude Code live in a
+separate **Tokens and Cost** dashboard (`grafana/dashboards-optional/token-cost.json`).
+Retries, commits, PRs, latency and logs stay in the original dashboards.
+It is on by default. If Orca already shows your token usage and cost, turn it off in `.env`:
+
+```bash
+COMPOSE_FILE=compose.yaml:compose.orca.yaml   # Docker Compose 2.24.4 or later
+```
+
+Then run `mise run up`. `compose.orca.yaml` only stops mounting the optional provisioning file,
+so Grafana removes that dashboard. Collection (collector, session-indexer, Prometheus) is unchanged,
+and Agent Sessions keeps its per-session token columns. Remove the line and run `mise run up` to bring it back.
+
+Changes for existing users:
+
+- Overview, Comparison and Claude Code keep their UIDs, stars and remaining panel IDs, but their token,
+  cost and cache panels moved to `token-cost`. Links to those panels (`viewPanel=`) no longer work.
+- Edits saved from the Grafana UI to these three dashboards are overwritten by the provisioned files.
+- The Gemini CLI panels inherited from llm-cli-telemetry were removed.
+
+### Retention and scan window
+
+Two `.env` settings decide how far back you can look, and they work differently:
+
+- `PROMETHEUS_RETENTION` (default `90d`) is how long Prometheus keeps **every** sample, not only tokens:
+  active time, tool failures, retries and the OTLP metrics as well. Older samples are deleted,
+  and raising the value later does not bring them back.
+- `LOOKBACK_DAYS` (default `14`) is not storage. session-indexer only reads transcript files modified
+  within this many days and drops older ones from its output, so shortening it removes older sessions
+  from the current Agent Sessions list and totals at the next scan. Raising it again brings them back
+  while the JSONL files are still on disk.
+
+Keep `PROMETHEUS_RETENTION` at least as long as the longest period you want to chart here, and
+`LOOKBACK_DAYS` at least as long as the period you want Agent Sessions to list. Seeing token usage in
+another tool such as Orca does not replace either: this stack cannot read that tool's history.
+Shorten them only to save disk, and only to periods you no longer need in this Grafana.
 
 ## Metrics from session-indexer
 

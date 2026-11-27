@@ -1,0 +1,15 @@
+# Opt-out override for people who already see token usage and cost in Orca.
+# Enable it in .env:  COMPOSE_FILE=compose.yaml:compose.orca.yaml
+# It only changes which Grafana dashboards are provisioned; data collection
+# (collector, session-indexer, Prometheus, Loki, Tempo) is untouched.
+# `!override` needs Docker Compose 2.24.4 or later.
+
+services:
+  grafana:
+    volumes: !override
+      # Mount the provisioning files one by one so the "optional" dashboard
+      # provider is never loaded (Grafana then deletes its dashboards).
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./grafana/provisioning/dashboards/core.yaml:/etc/grafana/provisioning/dashboards/core.yaml:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
