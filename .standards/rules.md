@@ -13,21 +13,84 @@ EditorConfig、gitignore.io の採用入力、mise の作業入口を維持す�
 
 GitHub Actions を使うリポジトリでは、すべてのワークフローに次の対策を導入する。
 依存するアクションや PR の内容が改ざんされても、リポジトリの権限と secret に被害が及ばないようにする。
+対策は、`zizmor` の判定項目と、人が確認する項目に分かれる。
 
-- 外部のアクションは `uses:` でコミット SHA の全桁に固定し、版を行末のコメントに残す。
+<!-- cspell:words artipacked zizmor betterleaks -->
+
+#### zizmor が判定する項目（CORE-ACTIONS-SECURITY）
+
+括弧内は、対応する zizmor の監査名を示す。
+
+- 外部のアクションは `uses:` でコミット SHA の全桁に固定する（`unpinned-uses`）。
   タグとブランチは付け替えられるため、固定には使わない。
-- ワークフローの `permissions` は `contents: read` などの最小権限にし、書き込み権限は必要なジョブにだけ与える。
-- `actions/checkout` には `persist-credentials: false` を指定する。後続の処理で認証情報を使うジョブだけを除く。
-- `pull_request_target` と `workflow_run` で、PR のコードを checkout して実行しない。
-- `github.event` などの外部入力は `run:` に `${{ }}` で埋め込まず、`env:` を経由して渡す。
-- secret を使うジョブとリリース用のジョブでは、PR からも書き込めるキャッシュを復元しない。
-- クラウドへの認証には、長期のアクセスキーではなく OIDC を使う。
-- 依存の更新は Renovate の `minimumReleaseAge` で待機期間を設け、公開直後の版を取り込まない。
+- ワークフローの `permissions` は `contents: read` などの最小権限にし、書き込み権限はジョブ単位で与える（`excessive-permissions`）。
+- `actions/checkout` には `persist-credentials: false` を指定する（`artipacked`）。
+- `pull_request_target` と `workflow_run` で、PR のコードを checkout して実行しない（`dangerous-triggers`）。
+- `github.event` などの外部入力は `run:` に `${{ }}` で埋め込まず、`env:` を経由して渡す（`template-injection`）。
+- secret を使うジョブとリリース用のジョブでは、PR からも書き込めるキャッシュを復元しない（`cache-poisoning`）。
+
+自律保守を導入した利用先では、共通 CI（`dev-standards.yml`）の `supply-chain` ジョブが、
+版を固定した zizmor を `--offline --min-severity medium` で実行する。
+必須チェックのジョブ（`workflow-result` または `standards-check`）はこのジョブの成功を待ち、失敗すると必須チェックも失敗する。
+
+このジョブは、dev-standards が生成する `dev-standards.yml` と `dev-standards-version-lag.yml` だけを検査する。
+利用先が書いたワークフローは対象にしない。
+既存のワークフローに指摘が残る利用先で、採用版の更新と同時に CI が失敗するのを避ける。
+
+#### 人が確認する項目（CORE-ACTIONS-SECURITY）
+
+zizmor の成功だけでは判断できないので、ワークフローを追加・変更するときに差分と照合する。
+
+- 固定した SHA の行末に版をコメントで残し、SHA がその版のコミットであること。
+- 書き込み権限を与えたジョブと、`persist-credentials: false` を外したジョブが、その権限と認証情報を実際に必要とすること。
+- クラウドへの認証に、長期のアクセスキーではなく OIDC を使うこと。
+- 依存の更新に Renovate の `minimumReleaseAge` で待機期間を設け、公開直後の版を取り込まないこと。
   脆弱性の修正は待機の対象から外す。
+- zizmor の指摘を `.github/zizmor.yml` や `# zizmor: ignore[...]` で除外する場合は、除外する理由。
+- 利用先が書いたワークフローも、「zizmor が判定する項目」を満たすこと。
+  次の節の条件を満たして自動判定に移すまでは、人が照合する。
+
+#### 検査を利用先の全ワークフローへ広げる条件（CORE-ACTIONS-SECURITY）
+
+利用先は、次の条件を満たしてから、自分の CI で `.github` 全体を検査する。
+共通 CI は生成物なので、直接編集して対象を広げない。
+
+- `zizmor --offline --min-severity medium .github` の指摘が 0 件になっている。
+  意図して残す指摘は、理由とともに除外を設定してある。
+- zizmor の版を `mise.toml` などで固定し、Renovate の待機期間を経て更新する。
+
+共通 CI の対象を `.github` 全体へ広げるのは、共通 CI を持つすべての利用先で 1 つ目の条件を確認した後にする。
+共通 CI を持たない利用先には `supply-chain` ジョブが届かないので、同じ検査を自分の CI で実行する。
+
+#### secret の検査（CORE-ACTIONS-SECURITY）
+
+`supply-chain` ジョブは、版を固定した betterleaks で作業ツリーの secret も検査する。
+過去の誤検知を拾わないよう、全履歴は対象にしない。検出した値はログに表示しない。
+
+- 実際の secret を検出した場合は、除外せず、先に失効と差し替えを行う。
+- 文書の例やテストの固定値などの誤検知は、リポジトリのルートの `.betterleaks.toml` か、
+  該当行の `betterleaks:allow` コメントで除外する。`.betterleaks.toml` があれば、ジョブはそれを読み込む。
+- `.betterleaks.toml` には、`[extend]` の `useDefault = true` を必ず書く。
+  これがない設定は既定のルールを置き換えるので、除外だけを書くと何も検出しなくなる。
+- 除外は検査対象の PR 自身が追加できる。除外を追加・変更する PR では、対象が実際の secret でないことをレビューで確認する。
+  `useDefault = true` が残っていることも確認する。
+
+`.betterleaks.toml` で文書の例を除外する場合は、次のように書く。
+
+```toml
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "文書に載せた例示用の値"
+paths = ['''^docs/example\.md$''']
+```
+
+#### check の扱い（CORE-ACTIONS-SECURITY）
 
 `check` はこの一覧を判定せず、`review_required` と報告する。
-ワークフローを追加・変更するときに、差分をこの一覧と照合する。
-`zizmor` などの静的解析を CI で実行すると、照合の一部を自動化できる。
+`supply-chain` ジョブの成功は生成ワークフローと作業ツリーの secret についての判定であり、
+利用先のワークフロー全体がこのルールに適合することを示さない。
 
 ## CORE-BOOTSTRAP
 
@@ -68,14 +131,14 @@ CI でも採用版の CLI で正本から再生成して照合する。保存済
 
 GitHub Actions の CI は、待ち時間が開発と依存更新の流れを止めないように処理時間を抑える。
 
-#### キャッシュ
+#### キャッシュ（CORE-CI-SPEED）
 
 依存の取得とビルドの結果をキャッシュする。
 `mise-action` や `setup-*` のキャッシュ機能を使えるならそれを優先し、足りない分を `actions/cache` で補う。
 キーには OS、ツールの版、依存のロックファイルのハッシュを含める。
 キャッシュがない状態でも CI が成功するようにする。
 
-#### 3分の基準
+#### 3分の基準（CORE-CI-SPEED）
 
 ランナーの待ち時間を除いたジョブの所要時間が3分以上なら、処理を見直す。
 マトリクスのジョブは OS ごとに判断し、1回だけの遅延ではなく直近の複数の実行で判断する。
@@ -87,7 +150,7 @@ GitHub Actions の CI は、待ち時間が開発と依存更新の流れを止�
 見直しても3分を切れない場合は、確認した内容と残る理由をワークフローのコメントに記録する。
 `check` は処理時間を判定せず、`review_required` と報告する。
 
-#### push と PR の重複起動
+#### push と PR の重複起動（CORE-CI-SPEED）
 
 自動化の共通 CI は、既定で `push` と `pull_request` の両方で起動する。作業ブランチで
 重複起動が確認できたら、タグの push で共通 CI を起動する必要があるかを先に確認する。
@@ -100,6 +163,131 @@ push 時に検証が必要なリリースブランチなどを列挙する。
 設定時は、列挙したブランチへの push、すべての PR、手動実行で起動し、タグの push では起動しない。
 
 正本の変更後は `plan` と `apply` で再生成し、必要なイベントと必須ジョブが維持されていることを確認する。
+
+## CORE-DEPENDENCY-INTAKE
+
+### 公開直後の依存と install スクリプトを取り込まない
+
+npm、pnpm、uv を使うリポジトリでは、公開直後の版を解決しない待機期間と、依存の install スクリプトの抑止を、
+パッケージマネージャー自身の設定に書く。
+Renovate の `minimumReleaseAge` は、Renovate が作る更新にしか効かない。
+パッケージマネージャーの設定は、人やエージェントが手元で `npm install foo`、`pnpm add foo`、`uv add foo` を実行したときにも効く。
+
+<!-- cspell:words sdist cooldown pyproject -->
+
+#### check が判定する項目（CORE-DEPENDENCY-INTAKE）
+
+`check` は、plan の入力にある lockfile を 1 つずつ判定する。判定には、同じディレクトリの設定を読む。
+設定ファイルは dev-standards が生成しないので、利用先が自分で書く。
+
+| lockfile | 待機期間（`cooldown`） | install スクリプト（`install-scripts`） |
+| --- | --- | --- |
+| `package-lock.json` | `.npmrc` の `min-release-age` が正の日数で、実行する npm が 11.10 以上 | `.npmrc` の `ignore-scripts=true` |
+| `pnpm-lock.yaml` | `pnpm-workspace.yaml` の `minimumReleaseAge` が正の分数で、`minimumReleaseAgeStrict` が `false` でない | pnpm 11 以上で、`dangerouslyAllowAllBuilds` が有効でない |
+| `uv.lock` | `uv.toml`、なければ `pyproject.toml` の `[tool.uv]` の `exclude-newer` が、正の期間か過去の日時 | 判定しない（後述） |
+
+npm:
+
+- 同じ `.npmrc` に `before` があると、npm は `min-release-age` より `before` を優先する。この場合は合格にしない。
+- `min-release-age` は npm 11.10.0 で追加された。それより前の npm は設定を無視するので、設定があっても合格にしない。
+- npm の版は、mise が導入するものを根拠にする。`.standards/mise.project.toml` の `tools.npm`、
+  なければ `tools.node` に同梱の npm で判断する。
+  npm 11.10 以上は、Node.js 24.14.1 以上の 24 系、25.7.0 以上の 25 系、26 以上に同梱されている。
+- `package.json` の `packageManager` に `npm@11.10.0` と書いても、npm は自分の版を切り替えない。
+  共通の bootstrap と CI も npm を直接呼ぶので、`packageManager` と `engines` は判定に使わない。
+- 版が分からない場合も合格にしない。
+
+pnpm:
+
+- pnpm の版は、`package.json` の `packageManager`、なければ `.standards/mise.project.toml` の `tools.pnpm` から読む。
+- `pnpm-workspace.yaml` は、lockfile のディレクトリから上にたどって最初に見つかったものを読む。
+- pnpm 11 以上では、`minimumReleaseAge` の既定が 1440 分（1 日）になる。ただし、既定の待機は strict にならない。
+  条件を満たす版がないと、待機期間の内側の版を取り込む。このため、既定のままでは合格にしない。
+- `minimumReleaseAge` を明示すると `minimumReleaseAgeStrict` の既定が `true` になり、満たす版がなければ失敗する。
+  既定の 1 日のまま合格にするには、`minimumReleaseAgeStrict: true` を書く。
+- pnpm 11 以上は、依存の build script を既定で実行しない。pnpm 11 で `onlyBuiltDependencies` などは廃止され、
+  `allowBuilds` に置き換わった。build script が必要な依存だけを `allowBuilds` で許可する。
+
+uv:
+
+- 同じディレクトリに `uv.toml` があると、uv は `pyproject.toml` の `[tool.uv]` を読まない。`check` も `uv.toml` だけを読む。
+- `exclude-newer` は、`"7 days"` や `P7D` のような正の期間か、過去の RFC 3339 の日時のときだけ合格にする。
+  0 の期間、未来の日時、解釈できない値は合格にしない。
+
+共通:
+
+- `node-npm` と `python-uv` はコンポーネントの lockfile を、`mise-project` はリポジトリ内のすべての lockfile を対象にする。
+  対象の lockfile がなければ `not_applicable` と報告する。
+- `check` はリポジトリ内の設定だけを読む。利用者や端末の設定（`~/.npmrc`、`~/.config/uv/uv.toml` など）、
+  環境変数、コマンドラインの指定は判定しない。
+- 読めない設定、解析できない設定は合格にしない。
+
+#### 判定の扱い（CORE-DEPENDENCY-INTAKE）
+
+設定が足りない場合、`check` は `warn` と報告する。終了コードは変えない。
+既存の利用先の多くはこの設定を持たない。不適合にすると、採用版の更新と同時に必須チェックが失敗する。
+`warn` は適合を意味しない。報告の `evidence` に従って設定を追加する。
+
+#### 設定の例（CORE-DEPENDENCY-INTAKE）
+
+待機期間は 7 日を目安にする。Renovate の `minimumReleaseAge`（共有設定では 14 日）より短くする。
+
+`.npmrc`:
+
+```ini
+min-release-age=7
+ignore-scripts=true
+```
+
+`pnpm-workspace.yaml`:
+
+```yaml
+minimumReleaseAge: 10080
+minimumReleaseAgeStrict: true
+allowBuilds:
+  esbuild: true
+```
+
+`pyproject.toml`:
+
+```toml
+[tool.uv]
+exclude-newer = "7 days"
+```
+
+- リポジトリの `.npmrc` に認証情報を書かない。
+- `ignore-scripts=true` にすると、依存の `postinstall` などは実行されない。
+  ネイティブモジュールなどで必要な場合は、対象を限って `npm rebuild <package> --ignore-scripts=false` を実行する。
+  `.npmrc` の設定は `npm rebuild` にも効くので、このコマンドだけで解除する。
+  `npm run` や `npm test` で指定したスクリプトは実行されるが、その `pre`・`post` スクリプトは実行されない。
+
+#### lockfile と CI との関係（CORE-DEPENDENCY-INTAKE）
+
+- npm: `min-release-age` は新しく解決する版にだけ効く。`npm ci` は `package-lock.json` のとおりに導入するので、影響を受けない。
+- uv: `exclude-newer` を追加・変更したら、`uv lock` を実行して `uv.lock` を更新する。
+  更新しないと、`uv sync --locked` と `uv run --locked` は lock が古いとして失敗する。
+  相対指定（`"7 days"`）では、uv 0.11.32 と 0.13.8 は `uv.lock` の `[options]` に期間（`exclude-newer-span = "P7D"`）を記録する。
+  併記される `exclude-newer` は互換のための固定値（`0001-01-01T00:00:00Z`）で、解決した時刻ではない。
+  この 2 つの版では、日付が変わっても `--locked` は失敗せず、`uv lock` をやり直しても差分は出ない。
+- pnpm: 現在の pnpm は、lockfile を読み込むときにも `minimumReleaseAge` を lockfile の各項目に適用して検証する。
+  `trustLockfile: true` はこの検証を省くので、設定しない。
+
+#### Renovate との関係（CORE-DEPENDENCY-INTAKE）
+
+- Renovate の `minimumReleaseAge` とパッケージマネージャーの設定は別々に働く。Renovate の公式文書は両方に設定することを勧めている。
+- パッケージマネージャーの待機期間を Renovate より短くすれば、通常の更新ではぶつからない。
+- 脆弱性の修正は Renovate の待機の対象外（`vulnerabilityAlerts` の `minimumReleaseAge` が `null`）だが、
+  パッケージマネージャーの待機はそのまま効く。待機期間より新しい修正版への更新は、lockfile の生成で失敗する。
+  急ぐ場合は、該当のパッケージだけを除外する（npm は `min-release-age-exclude`、pnpm は `minimumReleaseAgeExclude`、
+  uv は `exclude-newer-package`）。除外は修正版を取り込んだ後に取り除く。
+- Renovate は uv の `exclude-newer` を読まず、uv にも待機期間を渡さない。
+
+#### uv の sdist のビルド（CORE-DEPENDENCY-INTAKE）
+
+uv は wheel のない依存を sdist からビルドし、そのとき依存のコードを実行する。
+`[tool.uv]` の `no-build = true` または `no-build-package` でビルドを禁止できる。
+wheel を配布していない依存があると導入できなくなるため、`check` では判定しない。
+依存がすべて wheel で配布されている利用先では、設定を検討する。
 
 ## CORE-EDITORCONFIG
 
@@ -125,7 +313,7 @@ push 時に検証が必要なリリースブランチなどを列挙する。
 使用言語と対応 OS に合うテンプレートを選び、取得元 URL と取得内容を保存する。
 通常の適用・検証では保存済みの入力を使い、毎回 API から最新版を取得しない。
 
-#### API からの取得と更新
+#### API からの取得と更新（CORE-GITIGNORE）
 
 テンプレート一覧は `https://www.toptal.com/developers/gitignore/api/list?format=json` で確認できる。
 生成 API は `https://www.toptal.com/developers/gitignore/api/<カンマ区切りのテンプレート名>` を使う。
@@ -143,7 +331,7 @@ dev-standards の現在のプロファイルでは、言語の `go`、`python`�
 テンプレートの変更は共通定義の更新として検証し、利用先では検証済みの版へ移行する。
 利用先の保存済み入力やロックだけを直接書き換えない。
 
-#### 固有設定の保持と検証
+#### 固有設定の保持と検証（CORE-GITIGNORE）
 
 既存の除外設定とリポジトリ固有の追加設定は `.standards/gitignore.local` に保持する。
 生成された `.gitignore` を直接編集せず、正本の変更から計画を作成して確認・適用する。
@@ -160,6 +348,85 @@ dev-standards の現在のプロファイルでは、言語の `go`、`python`�
 共通の開発手順を成果物と検査で再現する。
 
 計画を確認して適用し、check と verify で確認する。
+
+## CORE-LOCKFILE-SOURCE
+
+### lockfile の取得元を公式レジストリに限る
+
+lockfile に記録された依存の取得元を、公式レジストリと完全性ハッシュつきの項目に限る。
+`npm ci` や `uv sync --locked` は lockfile のとおりに導入するので、lockfile の取得元を差し替える変更は、
+manifest との不一致としては検出されない。`check` が lockfile の中身を読んで検出する。
+
+<!-- cspell:words sdist npmjs pnpr -->
+
+#### check が判定する項目（CORE-LOCKFILE-SOURCE）
+
+`check` は、plan の入力にある lockfile を読み、次を満たさないパッケージがあれば `fail` と報告して終了コード 1 で終了する。
+
+| lockfile | 条件 |
+| --- | --- |
+| `package-lock.json` | `resolved` が `https://registry.npmjs.org/` で始まり、`integrity` が `sha512-` で始まる |
+| `pnpm-lock.yaml` | `resolution` の `integrity` が `sha512-` で始まる。`tarball` があれば `https://registry.npmjs.org/` で始まる。git の項目がない |
+| `uv.lock` | `source` が `registry = "https://pypi.org/simple"` で、sdist と wheel の `url` が `https://files.pythonhosted.org/` で始まり、`hash` が `sha256:` で始まる |
+
+- git、URL、tarball を指す依存は不適合になる。公式レジストリに公開された版へ置き換える。
+- `package-lock.json` には `lockfileVersion` 2 以上が要る。
+  `packages` がなく旧形式の `dependencies` だけがある場合は、判定できないので不適合にする。
+- `pnpm-lock.yaml` が複数の文書に分かれている場合は、すべての文書を読む。
+- `node-npm` と `python-uv` はコンポーネントの lockfile を、`mise-project` はリポジトリ内のすべての lockfile を対象にする。
+  対象の lockfile がなければ `not_applicable` と報告する。
+
+#### レジストリの設定（CORE-LOCKFILE-SOURCE）
+
+lockfile が公式の URL を指していても、レジストリの設定で実際の取得先は変わる。
+npm は `resolved` の `registry.npmjs.org` を設定中のレジストリに読み替え、pnpm は `integrity` だけの項目を設定中のレジストリから取得する。
+このため、lockfile と同じディレクトリの設定も読み、次のどれかがあれば `fail` と報告する。
+
+| ファイル | 不適合にする設定 |
+| --- | --- |
+| `.npmrc`（npm と pnpm） | `registry` または `@scope:registry` が `https://registry.npmjs.org/` 以外。`${NAME}` のような環境変数の参照も含む |
+| `pnpm-workspace.yaml` | `registry`、`registries` に `https://registry.npmjs.org/` 以外がある。`namedRegistries` または `pnprServer` がある |
+
+- `.npmrc` は npm の INI パーサーと同じに読む。キーと値の引用符、JSON のエスケープ、`;` と `#` のコメントを解釈し、
+  同じキーは最後の値を採る。
+- npm と同じに解釈できない行がレジストリに関わりうる場合は、不適合にする。
+  文字列にならない引用、セクション、配列（`registry[]`）、キーの中の `${NAME}`、
+  `registry` を含む未知のキー（`replace-registry-host` など）が該当する。
+  `//host/:_authToken` のような認証情報のキーは対象にしない。
+- pnpm では、lockfile のディレクトリからリポジトリのルートまでの `.npmrc` と、
+  上にたどって最初に見つかった `pnpm-workspace.yaml` を読む。lockfile を分けたワークスペースにも、上位の設定が効く。
+- 安全に読めない `.npmrc`（リポジトリの外を指すシンボリックリンクなど）と、解析できない `pnpm-workspace.yaml` は、
+  実際のレジストリが分からないので不適合にする。
+- uv は `uv.lock` に記録した URL から取得するので、uv の index の設定は読まない。
+- `check` はリポジトリ内の設定だけを読む。利用者や端末の設定（`~/.npmrc` など）、環境変数、
+  コマンドラインの指定によるレジストリの変更は判定しない。
+
+#### リポジトリ内のディレクトリを指す依存（CORE-LOCKFILE-SOURCE）
+
+取得を伴わない依存は、lockfile の位置から解決した先が、リポジトリ内の通常のディレクトリである場合だけ対象外にする。
+npm の `link` とその指す先、pnpm の `directory` と importer の `link:`、uv の `editable`・`virtual`・`directory` が該当する。
+次の場合は不適合にする。
+
+- 親ディレクトリの参照でリポジトリの外に出る。
+- 絶対パスを指す。
+- 途中にシンボリックリンクがある。
+- 先頭より後に `..` がある（`alias/../shared` など。手前の要素を確かめられない）。
+- 存在しない、またはディレクトリでない。
+
+npm の同梱（`inBundle`）の項目は、親のパッケージの tarball に含まれるので対象外にする。
+
+#### 報告に載せる内容（CORE-LOCKFILE-SOURCE）
+
+lockfile のキーや設定の値は、認証情報つきの URL を含むことがある。
+`check` は、レジストリのパッケージ名の形をしたキーだけを報告に載せ、それ以外は順番だけを示す。
+設定の値と、解析エラーの本文は載せない。
+
+#### 判定しない項目（CORE-LOCKFILE-SOURCE）
+
+- レジストリが配布する内容そのものの安全性。取得元とハッシュの形式だけを判定する。
+- 利用者や端末の設定、環境変数によるレジストリの変更。
+- 社内レジストリやミラーなど、公式レジストリ以外の取得元の許可。現在は許可する設定を持たない。
+  必要になった利用先は、`mise run standards:feedback` で記録する。
 
 ## CORE-MISE
 
@@ -189,8 +456,8 @@ mise の固定値だけでは実際に使用された実行系を保証しない
 選択され得る。この状態を、固定した Python による検証済みとは報告しない。
 
 Go でも、ホストから引き継いだ環境変数により、実行するツールと標準ライブラリの版が
-混在することがある。コンパイル時の版不一致は検査失敗であり、mise の固定値や別の環境での成功を
-根拠に成功扱いにしない。診断では、失敗した子プロセスで実際に選択された Go の版と参照先を
+混在しうる。コンパイル時の版不一致は検査失敗として扱う。
+mise の固定値や別の環境での成功を根拠にして、成功扱いにしない。診断では、失敗した子プロセスで実際に選択された Go の版と参照先を
 固定値と区別する。現在の設定検査は、この実行環境の整合や自動修復を保証しない。
 
 ネイティブ拡張など実行系の ABI に依存する補助キャッシュは、作成時と実行時の ABI が
@@ -228,6 +495,90 @@ GitHub Actions、テストツール、lint と format のツール、同じ製�
 複数のリポジトリに共通するまとめ方は共有の Renovate 設定に置き、固有の依存だけを各リポジトリの設定に書く。
 `check` はこの内容を判定せず、`review_required` と報告する。
 
+## CORE-TYPESCRIPT-TSRS
+
+### TypeScript の型チェックに tsrs を使う
+
+<!-- cspell:words tsrs musl -->
+
+TypeScript を使うリポジトリでは、型チェックに [tsrs](https://github.com/oxc-project/tsrs) を使う。
+tsrs は TypeScript 7 の型チェッカーを Rust に移植したもので、npm パッケージ `tsrs` として配布されている。
+型チェックだけを置き換え、アプリの実装言語、ビルド、実行時の依存は変えない。
+TypeScript のソースと `tsconfig.json` の両方を持つリポジトリを対象とし、どちらかがないリポジトリは対象外とする。
+
+公式には今も実験版なので、安定版になるまでは次の初期値で使う。
+利用先で扱いを変える場合は、理由と確認した内容を利用先の文書に残す。
+
+#### 版の固定と実行（CORE-TYPESCRIPT-TSRS）
+
+- tsrs は mise の npm ツールとして版を固定し、mise のタスクとして実行する。
+  `latest` や範囲指定は使わない。
+- タスクだけにツールを指定し、プロジェクト全体の `[tools]` や `package.json` の依存には追加しない。
+  `npm ci`、ビルド、既存の型チェックが使う TypeScript の版は変えない。
+- 共通の mise 設定を生成している利用先は、`.standards/mise.project.toml` などの正本を編集し、
+  変更計画を確認して再生成する。
+
+```toml
+[tasks."typecheck:tsrs"]
+description = "Experimental Rust TypeScript check; tsc remains required"
+tools = { "npm:tsrs" = "0.18.0-ts7.1.0-dev.20260929" }
+run = "tsrs --noEmit"
+```
+
+版は例であり、利用先で確認した版を固定する。
+`tsconfig.json` がリポジトリの直下にない場合は、タスクの `dir` で対象のディレクトリを指定する。
+ローカルで型を確かめるときは、まず `mise run typecheck:tsrs` を実行する。
+
+#### tsc との併用（CORE-TYPESCRIPT-TSRS）
+
+tsrs が安定版になるまでは、tsc による型チェックを必須の検査として残す。
+
+- 既存の `tsc --noEmit` などの型チェックと、それを呼ぶ lint・test・build のタスクを削除・置換しない。
+- tsrs のタスクは追加の検査とし、`lint`、`test`、`build` など CI の必須チェックが呼ぶタスクには接続しない。
+- 両者の結果が食い違ったら tsc の結果を正とし、差分を既知の互換性の問題と照合する。
+  検査を無効にして tsrs だけを通さない。
+- tsc を外して tsrs だけにするのは、tsrs が安定版になり、利用先の全プラットフォームで動作を確認してからとする。
+
+#### バイナリがないプラットフォーム（CORE-TYPESCRIPT-TSRS）
+
+tsrs はプラットフォームごとのバイナリを npm の `optionalDependencies` で配布し、対象は版によって異なる。
+`0.18.0-ts7.1.0-dev.20260929` は macOS arm64 と Linux x64／arm64（GNU／musl）だけを配布し、
+Windows と macOS x64 向けのバイナリはない。
+固定した版にバイナリがないプラットフォームでは、tsrs を使わず tsc の型チェックを使う。
+
+dev-standards が生成する CI は `windows-latest` でも必須チェックを実行する。
+tsrs のタスクを必須チェックが呼ぶタスクに接続すると、バイナリがないランナーで必須チェックが失敗する。
+CI で tsrs を実行する場合は、バイナリがあるランナーに限定した別のジョブにし、必須チェックの条件に加えない。
+必須チェックの対象 OS を減らして tsrs に合わせない。
+
+#### 版の更新（CORE-TYPESCRIPT-TSRS）
+
+版を更新するときは、固定する前に次を確認する。
+
+- 配布元: npm の `tsrs` が公式リポジトリ `oxc-project/tsrs` から公開された版であること。
+  レジストリ署名と attestation を検証できる場合は検証する。
+- 対応プラットフォーム: 新しい版の `optionalDependencies`（`npm view tsrs@<版> optionalDependencies`）。
+  対象が変わったら、tsc に切り替えるプラットフォームの記述も更新する。
+- 互換性: [既知の互換性の制約](https://github.com/oxc-project/tsrs/blob/main/docs/COMPATIBILITY.md)と
+  リリースノート。対応する TypeScript の版が変わる場合は、tsc との診断の差分も確認する。
+- 動作: 更新後に tsrs と tsc の両方で型チェックを実行し、結果を比べる。
+
+mise は既定で npm のインストール時スクリプトを抑止する。この設定を tsrs のために緩めない。
+
+#### 配布と検証の範囲（CORE-TYPESCRIPT-TSRS）
+
+共通指示の配布を有効にした利用先では、このルールを `.standards/rules.md` に配布する。
+既存利用先には、採用版の更新計画を確認・適用してから届く。
+この配布だけでは、利用先に tsrs のタスクは追加されない。タスクの追加と版の固定は利用先で行う。
+dev-standards は生成する CI と mise のタスクを、このルールでは変更しない。
+`check` と `verify` は tsrs の導入と実行結果を判定せず、`review_required` と報告する。
+
+#### 一次情報（CORE-TYPESCRIPT-TSRS）
+
+- [tsrs の公式リポジトリ](https://github.com/oxc-project/tsrs)
+- [既知の互換性の制約](https://github.com/oxc-project/tsrs/blob/main/docs/COMPATIBILITY.md)
+- [mise の npm バックエンド](https://mise.jdx.dev/dev-tools/backends/npm.html)
+
 ## PROCESS-AI-DISCLOSURE
 
 ### AI が実装した PR の本文に明示する
@@ -235,11 +586,13 @@ GitHub Actions、テストツール、lint と format のツール、同じ製�
 AI エージェントが実装に関与した PR は、エージェントの種類や本文の言語にかかわらず、
 本文の1行目に次の固定文を記載し、空行を挟んで説明を続ける。
 
+<!-- cspell:words rulesync -->
+
 ```text
 :robot: これは AI で書かれています。
 ```
 
-#### 作成・更新時の手順
+#### 作成・更新時の手順（PROCESS-AI-DISCLOSURE）
 
 - PR の作成前に固定文を先頭へ追加する。タイトル、コードの各ファイル、コミットメッセージへの追加は求めない。
 - 既存 PR の本文を更新するときも固定文を先頭に維持する。告知として途中にある同じ固定文は先頭へ移し、重複させない。
@@ -255,7 +608,7 @@ AI エージェントが実装に関与した PR は、エージェントの種�
 AI の実装関与がない PR や、読み取り専用のレビューだけを行った PR へ、一律にこの表記を追加しない。
 AI の実装関与がある PR をエージェントが再編集するときは、人間による編集後も固定文を維持・復元する。
 
-#### 配布と検証の範囲
+#### 配布と検証の範囲（PROCESS-AI-DISCLOSURE）
 
 共通指示の配布を有効にした利用先では、このルールを `.standards/rules.md` に配布する。
 自律保守も rulesync も有効にしていない利用先には、この文書だけでは配布されない。
@@ -276,14 +629,14 @@ rulesync の検査は `AGENTS.md` の共通入口を確認する。他のエー�
 
 ### 日本語の出力に textlint・cspell・yomiyasu を導入する
 
-<!-- cspell:words yomiyasu -->
+<!-- cspell:words yomiyasu textlint -->
 
 日本語の文書や出力を作成・編集するリポジトリでは、textlint、cspell、yomiyasu を導入する。
 共通ルールなどの生成済みファイルを受け取るだけの場合は、導入の対象外とする。
 README、設計書、利用者向けの文言、コメント、コミットメッセージ、PR 本文、エージェントの回答を対象とする。
 意味、事実、数値、URL、コード、識別子を保持し、読みやすい日本語で書く。
 
-#### 役割と設定
+#### 役割と設定（PROCESS-JAPANESE-WRITING）
 
 - textlint で日本語の文章規則と表記を検査する。本体だけではルールがないため、
   日本語用のルールまたはプリセットを選び、設定とともに管理する。
@@ -297,7 +650,7 @@ README、設計書、利用者向けの文言、コメント、コミットメ�
 検査を通すために既存ルールを一括無効化しない。生成物、引用、翻訳などを除外する場合は、
 対象と理由を限定して設定に残す。配布された `.standards/rules.md` の扱いも生成物として定める。
 
-#### 導入と検証
+#### 導入と検証（PROCESS-JAPANESE-WRITING）
 
 導入するパッケージ、ルール、スキルの版またはコミットと取得元を記録し、再現可能にする。
 案件で使うパッケージ管理とロックを利用する。
@@ -331,7 +684,7 @@ yomiyasu の補助スクリプトを自動検査に使う場合は、必要な�
 dev-standards の `check` と `verify` は、このルール自体を `review_required` として報告する。
 利用先の lint が成功しても、ファイルに含まれない出力やスキルによる推敲まで検証済みとは扱わない。
 
-#### 一次情報
+#### 一次情報（PROCESS-JAPANESE-WRITING）
 
 - [textlint の導入とルール設定](https://github.com/textlint/textlint#usage)
 - [cspell の設定](https://cspell.org/docs/Configuration)
@@ -366,7 +719,7 @@ dev-standards の `check` と `verify` は、このルール自体を `review_re
 Issue を依頼・受入条件・経過・証拠の正本、横断 Project の Status を一覧で見る作業状態の正本とする。
 会話の終了、コミット、PR 作成だけを完了と扱わない。
 
-#### 設定の確認
+#### 設定の確認（PROCESS-PROJECT-TRACKING）
 
 開始時に利用先の `docs/project-management.md` を読み、対象 Project の URL、対象リポジトリ、
 Status の対応、日付フィールド、タイムゾーン、完了条件を確認する。
@@ -389,7 +742,7 @@ Issue は対象リポジトリで検索し、依頼内容と受入条件が一�
 異なるリポジトリの作業は相互リンクし、独立して完了を判断できる単位にする。
 担当や他の進行中の会話を確認し、並行作業の状態を一方的に巻き戻さない。
 
-#### 開始・進捗・終了
+#### 開始・進捗・終了（PROCESS-PROJECT-TRACKING）
 
 | 契機 | Issue に残すこと | Project に反映すること |
 | --- | --- | --- |
@@ -407,7 +760,7 @@ Issue は対象リポジトリで検索し、依頼内容と受入条件が一�
 日付フィールドは設定したタイムゾーンの日付を使い、開始日は再開のたびに上書きしない。
 期限はユーザーの指定か合意がある場合だけ設定し、未定は空欄にする。推測で進捗率や完了予定を埋めない。
 
-#### 完了の判断
+#### 完了の判断（PROCESS-PROJECT-TRACKING）
 
 Issue の受入条件を先に読み、実装済み、検証済み、マージ済み、公開済み、利用者確認済みを区別する。
 公開や利用者確認が受入条件に含まれるなら、マージ後も Issue を開いたまま残す。
@@ -417,7 +770,7 @@ PR のマージだけで完了する Issue には `Closes #N` を使えるが、
 再開する場合は完了日を消し、Issue と Status を実際の状態に戻す。
 他の担当の未完了範囲が残る場合は、今回の作業結果だけを追記する。
 
-#### 重複と失敗を防ぐ
+#### 重複と失敗を防ぐ（PROCESS-PROJECT-TRACKING）
 
 検索と直近一覧の照合でも、同時作成による重複を完全には防げない。
 Issue 作成後と有意な進捗を記録するときにも、同じ依頼・受入条件の未完了 Issue を検索する。
@@ -441,12 +794,12 @@ Issue だけ更新できた場合も Project が更新済みとは言わない�
 独立して進められる開発・検証は継続し、終了時に残った同期内容をユーザーへ示す。
 認証情報や会話全文を Issue に貼らず、公開先に記録してよい要約と証拠だけを残す。
 
-#### 一覧と実行方法
+#### 一覧と実行方法（PROCESS-PROJECT-TRACKING）
 
 横断 Project はリポジトリ別の表、Status 別のボード、保留・レビュー待ちの絞り込みを用意する。
 表には Repository、Title、Status、開始日、目標日、完了日、最終更新日、親 Issue、子 Issue の進捗を表示する。
 Status と同じ段階を示すラベルは追加せず、既存ラベルは分類用途として保持する。
-自動クローズや Project のワークフローが受入条件より先に完了にしないか、初回設定時に確認する。
+自動クローズや Project のワークフローが受入条件より先に完了へ移さないか、初回設定時に確認する。
 
 接続ツールで対応できる操作は接続ツールを使い、Projects 操作がなければ GitHub CLI を使う。
 初回には Projects の読み取り・書き込み権限を確認する。
@@ -457,3 +810,32 @@ CLI の対応構文は公式マニュアルと実行環境の `--help` を確認
 
 このルールは主担当のエージェントが作業の区切りで実行する手順であり、常駐同期や hooks による GitHub 書き込みを追加しない。
 `check` と `verify` は、この進捗ルールの GitHub への反映を検証・代行せず、`review_required` と報告する。
+
+## PROCESS-WORKTREE
+
+### ファイルの変更は worktree で行う
+
+エージェントがファイルを変更するときは、既定ブランチの元の checkout を直接編集しない。
+作業は `git worktree` か、Orca などのツールが用意する worktree で行う。
+実装を別のエージェントやハーネスに任せず、対話の中で直接編集する場合にも適用する。
+
+<!-- cspell:words worktree -->
+
+#### 作業場所（PROCESS-WORKTREE）
+
+- 変更を始める前に、作業中のディレクトリが元の checkout か worktree かを確認する。
+  元の checkout にいる場合は、作業用のブランチと worktree を作ってから編集する。
+- 別のリポジトリを変更する場合も、そのリポジトリに worktree を作る。隣の `../<repo>` を直接編集しない。
+- Codex など別のエージェントに作業させる場合は、対象のリポジトリと worktree を指定して渡す。
+- 別のエージェントやハーネスに渡した作業は、渡した先の作業場所に任せる。同じ変更をローカルで並行して行わない。
+- 元の checkout に未コミットの変更がある場合は、reset や stash で退避せず、そのまま残して worktree で作業する。
+
+質問、調査、レビューなど、ファイルを変更しない作業には適用しない。
+dev-standards の共通ルール・設定の導入、更新、自律保守は、それぞれの既存手順が定める作業場所に従う。
+
+#### 配布と検証の範囲（PROCESS-WORKTREE）
+
+共通指示の配布を有効にした利用先では、このルールを `.standards/rules.md` に配布する。
+既存利用先には、採用版の更新計画を確認・適用してから届く。
+このルールはエージェントへの指示であり、元の checkout への書き込みを hooks などで機械的に拒否するものではない。
+`check` と `verify` は作業場所を検査せず、遵守の判断を `review_required` として報告する。
